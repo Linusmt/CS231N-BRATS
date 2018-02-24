@@ -34,7 +34,7 @@ def brats_preprocess_labels(images, newsize, name='unknown', save=False):
 		else: np.save(name, np.array(preprocessed)[..., np.newaxis].astype('float32'))
 	return np.array(preprocessed)[..., np.newaxis].astype('float32')
 
-def get_brats_data(mri_path, labels_path, image_size, model_name='unknown', preprocessed=False, save=False):
+def get_brats_data(mri_path, labels_path, image_size, model_name='unknown', preprocessed=False, save=False, shuffle=True):
 	# Load data
 	mris = brats_load_data(mri_path, 'mri', preprocessed)
 	labels = brats_load_data(labels_path, 'labels', preprocessed)
@@ -43,10 +43,15 @@ def get_brats_data(mri_path, labels_path, image_size, model_name='unknown', prep
 		mris = brats_preprocess_mri(mris, image_size, model_name + '_mris', save)
 		labels = brats_preprocess_labels(labels, image_size, model_name + '_labels', save)
 
+
+	if shuffle:
+		order = np.random.permutation(mris.shape[0])
+		mris, labels =  mris[order,], labels[order,]
 	# Return data and labels
 	return mris, labels
 
 def brats_f1_score(true, prediction):
+	prediction = kb.round(prediction)
     intersection = kb.sum(kb.flatten(true) * kb.flatten(prediction))
     union = kb.sum(kb.flatten(true)) + kb.sum(kb.flatten(prediction))
     return (2 * intersection + 1) / (union + 1)
@@ -57,6 +62,16 @@ def brats_f1_loss(true, prediction):
 
 ####################################################################
 
+def mean_iou(y_true, y_pred):
+    prec = []
+    for t in np.arange(0.5, 1.0, 0.05):
+        y_pred_ = tf.to_int32(y_pred > t)
+        score, up_opt = tf.metrics.mean_iou(y_true, y_pred_, 2, y_true)
+        kb.get_session().run(tf.local_variables_initializer())
+        with tf.control_dependencies([up_opt]):
+            score = tf.identity(score)
+        prec.append(score)
+    return kb.mean(kb.stack(prec), axis=0)
 
 def plot(history, model_name):
 	# Create plot that plots model accuracy vs. epoch
