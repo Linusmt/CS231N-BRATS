@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg') # to save plots as images
 import matplotlib.pyplot as plt
-
+import tensorflow as tf
 ############################# BRATS #################################
 
 def brats_load_data(path, dataname='unknown', preprocessed=False):
@@ -50,11 +50,31 @@ def get_brats_data(mri_path, labels_path, image_size, model_name='unknown', prep
 	# Return data and labels
 	return mris, labels
 
+
 def brats_f1_score(true, prediction):
 	prediction = kb.round(prediction)
-    intersection = kb.sum(kb.flatten(true) * kb.flatten(prediction))
-    union = kb.sum(kb.flatten(true)) + kb.sum(kb.flatten(prediction))
-    return (2 * intersection + 1) / (union + 1)
+	intersection = kb.sum(kb.flatten(true) * kb.flatten(prediction))
+	union = kb.sum(kb.flatten(true)) + kb.sum(kb.flatten(prediction))
+	return (2 * intersection + 1) / (union + 1)
+
+def f1(batch_size):
+	def brats_f1_score(true, prediction):
+		prediction = kb.round(prediction)
+		intersection = kb.sum(kb.flatten(true) * kb.flatten(prediction))
+		union = kb.sum(kb.flatten(true)) + kb.sum(kb.flatten(prediction))
+		return (2 * intersection + 1) / (union + 1) * batch_size
+	return brats_f1_score
+
+
+def weighted_cross_entropy_loss(pos_weight):
+
+	def _weighted_cross_entropy_loss(y_true, y_pred):
+		return tf.nn.weighted_cross_entropy_with_logits(y_true, y_pred, pos_weight)
+		# pos_loss = kb.flatten(y_true) * (-tf.log(tf.sigmoid(kb.flatten(y_pred))))*weights[1] 
+		# neg_loss = (1-kb.flatten(y_true))* (-tf.log(1- tf.sigmoid(kb.flatten(y_pred)))) * weights[0] 
+		# return  kb.mean(pos_loss + neg_loss)		
+	return _weighted_cross_entropy_loss
+
 
 # We want to maximize f1 score (thus minimizing the negative f1 score)
 def brats_f1_loss(true, prediction):

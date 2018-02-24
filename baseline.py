@@ -29,19 +29,16 @@ class BaselineModel():
 	    X_input = Input(input_shape)
 
 	    # [1] First CONV--POOL--ReLU layer
-	    X = Conv3D(filters=16, kernel_size=3, strides=(1,1,1), padding='same')(X_input)
+	    X = Conv3D(filters=16, kernel_size=3, strides=(1,1,1), padding='same', activation='elu')(X_input)
 	    X = AveragePooling3D(strides=(1,1,1), padding="same")(X)
-	    X = Activation('relu')(X)
 
 	    # [2] Second CONV--POOL--ReLU layer
-	    X = Conv3D(filters=32, kernel_size=3, strides=(1,1,1), padding='same')(X)
+	    X = Conv3D(filters=32, kernel_size=3, strides=(1,1,1), padding='same', activation='elu')(X)
 	    X = AveragePooling3D(strides=(1,1,1), padding="same")(X)
-	    X = Activation('relu')(X)
 
 	    # [3] Third CONV--POOL--ReLU layer
-	    X = Conv3D(filters=64, kernel_size=3, strides=(1,1,1), padding='same')(X)
+	    X = Conv3D(filters=64, kernel_size=3, strides=(1,1,1), padding='same', activation='elu')(X)
 	    X = AveragePooling3D(strides=(1,1,1), padding="same")(X)
-	    X = Activation('relu')(X)
 
 	    # Final prediction (sigmoid)
 	    X = Conv3D(filters=1, kernel_size=1, activation='sigmoid')(X)
@@ -53,6 +50,7 @@ class BaselineModel():
 
 	def compile(self):
 		self.model.compile(optimizer=self.optimizer, loss=self.loss, metrics=self.metrics)
+		self.model.summary()
 
 	def fit(self, X_train, Y_train):
 		earlystopper = EarlyStopping(patience=5, verbose=1)
