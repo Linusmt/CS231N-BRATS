@@ -93,10 +93,13 @@ class Unet3DModelInception():
 		self.model.compile(optimizer=self.optimizer, loss=self.loss, metrics=self.metrics)
 		self.model.summary()
 
-	def fit(self, X_train, Y_train):
+	def fit(self, X_train, Y_train, validation_set=None):
 		earlystopper = EarlyStopping(patience=5, verbose=1)
 		checkpointer = ModelCheckpoint('model-unet3d-inception-1.h5', verbose=1, save_best_only=True)
-		return self.model.fit(x=X_train, y=Y_train, validation_split=0.2, epochs=self.epochs, batch_size=self.batch_size, callbacks=[earlystopper, checkpointer])
+		if validation_set is None:
+			return self.model.fit(x=X_train, y=Y_train, validation_split=0.2, epochs=self.epochs, batch_size=self.batch_size, callbacks=[earlystopper, checkpointer])
+		else:
+			return self.model.fit(x=X_train, y=Y_train, validation_data=validation_set, epochs=self.epochs, batch_size=self.batch_size, callbacks=[earlystopper, checkpointer])
 
 	def evaluate(self, X_test, Y_test):
 		return self.model.evaluate(x=X_test, y=Y_test)
