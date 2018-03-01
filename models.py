@@ -14,69 +14,85 @@ import glob
 import numpy as np
 #####
 
-def baseline():
+# MRI_PATH = './BRATS2015_Training/HGG/**/*T1c*.mha'
+# LABELS_PATH = './BRATS2015_Training/HGG/**/*OT*.mha'
+IMAGE_SIZE = (64, 64, 64)
+MRI_PATH = 'baseline_mris_64.npy'
+LABELS_PATH = 'baseline_labels_64.npy'	
+
+# IMAGE_SIZE = (32, 32, 32)
+# MRI_PATH = './baseline_mris_128.npy'
+# LABELS_PATH = './baseline_labels_128.npy'
+METRICS = ['binary_accuracy',  utils.mean_iou,  utils.brats_f1_score]
+
+def baseline(num_epochs=40):
 	print('=' * 80)
 	print('BASELINE MODEL')
 	print('=' * 80)
 
-	mri_path = '../BRATS/Training/HGG/**/*T1c*.mha'
-	labels_path = '../BRATS/Training/HGG/**/*OT*.mha'
-	mri_path = '/tmp/data/baseline_mris.npy'
-	labels_path = '/tmp/data/baseline_labels.npy'	
+	# mris, labels = utils.get_brats_data(MRI_PATH, LABELS_PATH, IMAGE_SIZE, 'baseline', False, True, shuffle=True)
 
-	image_size = (32, 32, 32)
-	mri_path = './baseline_mris.npy'
-	labels_path = './baseline_labels.npy'
-	mris, labels = utils.get_brats_data(mri_path, labels_path, image_size, 'baseline', True, False, shuffle=True)
+	mris, labels = utils.get_brats_data(MRI_PATH, LABELS_PATH, IMAGE_SIZE, 'baseline', True, False, shuffle=True)
 
-
-	model = BaselineModel(optimizer=Adam(1e-3),loss=utils.weighted_cross_entropy_loss(1), metrics=['binary_accuracy',  utils.mean_iou, utils.brats_f1_score], epochs=200, batch_size=1)
+	model = BaselineModel(optimizer=Adam(1e-4),loss='binary_crossentropy', metrics=METRICS, epochs=num_epochs, batch_size=1)
 	model.build_model(mris.shape[1:])
 	return model, mris, labels
 
-def u3d():
+def u3d(num_epochs=40):
 	print('=' * 80)
 	print('Unet3DModel MODEL')
 	print('=' * 80)
 
-	image_size = (64, 64, 64)
-	# mri_path = './BRATS/Training/HGG/**/*T1c*.mha'
-	# labels_path = './BRATS/Training/HGG/**/*OT*.mha'
-	image_size = (32, 32, 32)
-	mri_path = './baseline_mris.npy'
-	labels_path = './baseline_labels.npy'
+	mris, labels = utils.get_brats_data(MRI_PATH, LABELS_PATH, IMAGE_SIZE, 'u3d', True, False, shuffle=True)
 
-	mris, labels = utils.get_brats_data(mri_path, labels_path, image_size, 'u3d', True, False, shuffle=True)
-
-	model = Unet3DModel(optimizer=Adam(1e-3), loss=utils.weighted_cross_entropy_loss(2), metrics=['binary_accuracy',  utils.mean_iou,  utils.brats_f1_score], epochs=200, batch_size=1)
+	model = Unet3DModel(optimizer=Adam(1e-4),loss='binary_crossentropy', metrics=METRICS, epochs=num_epochs, batch_size=1)
 	model.build_model(mris.shape[1:])
-	return model, mris, labels
+	return model, mris, labels,
 
 
-def u3d_inception():
+def u3d_inception(num_epochs=40):
 	print('=' * 80)
 	print('Unet3D_Inception MODEL')
 	print('=' * 80)
 
-	image_size = (64, 64, 64)
-	# mri_path = './BRATS/Training/HGG/**/*T1c*.mha'
-	# labels_path = './BRATS/Training/HGG/**/*OT*.mha'
-	image_size = (32, 32, 32)
-	mri_path = './baseline_mris.npy'
-	labels_path = './baseline_labels.npy'
-	mris, labels = utils.get_brats_data(mri_path, labels_path, image_size, 'u3d_inception', True, False, shuffle=True)
+	mris, labels = utils.get_brats_data(MRI_PATH, LABELS_PATH, IMAGE_SIZE, 'u3d_inception', True, False, shuffle=True)
 
-	model = Unet3DModelInception(optimizer=Adam(1e-4), loss='binary_crossentropy', metrics=['binary_accuracy',  utils.mean_iou, utils.brats_f1_score], epochs=200, batch_size=1)
+	model = Unet3DModelInception(optimizer=Adam(1e-4),loss='binary_crossentropy', metrics=METRICS, epochs=num_epochs, batch_size=1)
 	model.build_model(mris.shape[1:])
 	return model, mris, labels
 # Main function will run and test different models
-def main():
-	model, mris, labels = u3d()
+
+import argparse
+
+
+MODELS = {"baseline":baseline, "u3d":u3d, "u3d_inception": u3d_inception }
+
+def main(args):
+	#Set the seed for consistent runs
 	np.random.seed(42)
+
+	#Take the arguments from the command line
+	model_name = args.model
+	num_epochs = args.num_epochs
+
+	#Create the model
+	model, mris, labels = MODELS[model_name](num_epochs=num_epochs)
 	model.compile()
 	history = model.fit(mris, labels)
-	utils.plot(history, model_name)
 
+	#Plot the accuracy and the f1 score
+	utils.plot(history, model_name, num_epochs)
+
+	#Save the model history for later inspection
+	with open('/train_history_' + model_name + "_" + str(num_epochs), "wb") as history_file:
+		pickle.dump(history.history, file_pi)
 
 if __name__ == '__main__':
-	main()
+	parser = argparse.ArgumentParser(description='Process some integers.')
+	parser.add_argument('--model', type=str, nargs='?', default="baseline",
+	                    help='name of model')
+	parser.add_argument('--num_epochs', type=int, nargs='?', default=10,
+	                    help='number of desired epochs')
+	args = parser.parse_args()
+
+	main(args)
