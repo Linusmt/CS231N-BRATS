@@ -34,7 +34,7 @@ def brats_preprocess_labels(images, newsize, name='unknown', save=False):
 		else: np.save(name, np.array(preprocessed)[..., np.newaxis].astype('float32'))
 	return np.array(preprocessed)[..., np.newaxis].astype('float32')
 
-def get_brats_data(mri_path, labels_path, image_size, model_name='unknown', preprocessed=False, save=False, shuffle=True, augment=True):
+def get_brats_data(mri_path, labels_path, image_size, model_name='unknown', preprocessed=False, save=False, shuffle=True):
 	# Load data
 	mris = brats_load_data(mri_path, 'mri', preprocessed)
 	labels = brats_load_data(labels_path, 'labels', preprocessed)
@@ -42,12 +42,7 @@ def get_brats_data(mri_path, labels_path, image_size, model_name='unknown', prep
 	if not preprocessed:
 		mris = brats_preprocess_mri(mris, image_size, model_name + '_mris_' +str(image_size[0]), save)
 		labels = brats_preprocess_labels(labels, image_size, model_name + '_labels_' +str(image_size[0]), save)
-
-	if augment:
-		new_mris = [mris, np.flip(mris, axis=1), np.flip(mris, axis=2), np.flip(mris, axis=3)]
-		new_labels = [labels, np.flip(labels, axis=1), np.flip(labels, axis=2), np.flip(labels, axis=3)]
-		mris = np.concatenate(new_mris, axis=0)
-		labels = np.concatenate(new_labels, axis=0)
+	labels = np.round(labels)
 
 	if shuffle:
 		order = np.random.permutation(mris.shape[0])
@@ -58,6 +53,12 @@ def get_brats_data(mri_path, labels_path, image_size, model_name='unknown', prep
 	# Return data and labels
 	return mris, labels
 
+def augment_data(X, Y):
+	new_X = [X, np.flip(X, axis=1), np.flip(X, axis=2), np.flip(X, axis=3)]
+	new_Y = [Y, np.flip(Y, axis=1), np.flip(Y, axis=2), np.flip(Y, axis=3)]
+	new_X = np.concatenate(new_X, axis=0)
+	new_Y = np.concatenate(new_Y, axis=0)
+	return new_X,new_Y
 
 def brats_f1_score(true, prediction):
 	prediction = kb.round(prediction)

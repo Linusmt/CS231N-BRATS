@@ -32,11 +32,16 @@ def baseline(num_epochs=40):
 
 	# mris, labels = utils.get_brats_data(MRI_PATH, LABELS_PATH, IMAGE_SIZE, 'baseline', False, True, shuffle=True)
 
+
 	mris, labels = utils.get_brats_data(MRI_PATH, LABELS_PATH, IMAGE_SIZE, 'baseline', True, False, shuffle=True)
+
+	validation_set = (mris[:20,], labels[:20])
+	mris, labels  = (mris[20:,], labels[20:,])
 
 	model = BaselineModel(optimizer=Adam(1e-4),loss='binary_crossentropy', metrics=METRICS, epochs=num_epochs, batch_size=1)
 	model.build_model(mris.shape[1:])
-	return model, mris, labels
+
+	return model, mris, labels, validation_set
 
 def u3d(num_epochs=40):
 	print('=' * 80)
@@ -44,10 +49,14 @@ def u3d(num_epochs=40):
 	print('=' * 80)
 
 	mris, labels = utils.get_brats_data(MRI_PATH, LABELS_PATH, IMAGE_SIZE, 'u3d', True, False, shuffle=True)
+	
+	validation_set = (mris[:20,], labels[:20])
+	mris, labels  = utils.augment_data(mris[20:,], labels[20:,])
+
 
 	model = Unet3DModel(optimizer=Adam(1e-4),loss='binary_crossentropy', metrics=METRICS, epochs=num_epochs, batch_size=1)
 	model.build_model(mris.shape[1:])
-	return model, mris, labels,
+	return model, mris, labels, validation_set
 
 
 def u3d_inception(num_epochs=40):
@@ -57,9 +66,12 @@ def u3d_inception(num_epochs=40):
 
 	mris, labels = utils.get_brats_data(MRI_PATH, LABELS_PATH, IMAGE_SIZE, 'u3d_inception', True, False, shuffle=True)
 
+	validation_set = (mris[:20,], labels[:20])
+	mris, labels  = utils.augment_data(mris[20:,], labels[20:,])
+
 	model = Unet3DModelInception(optimizer=Adam(1e-4),loss='binary_crossentropy', metrics=METRICS, epochs=num_epochs, batch_size=1)
 	model.build_model(mris.shape[1:])
-	return model, mris, labels
+	return model, mris, labels, validation_set
 # Main function will run and test different models
 
 import argparse
@@ -76,15 +88,16 @@ def main(args):
 	num_epochs = args.num_epochs
 
 	#Create the model
-	model, mris, labels = MODELS[model_name](num_epochs=num_epochs)
+	model, mris, labels, validation_set = MODELS[model_name](num_epochs=num_epochs)
 	model.compile()
-	history = model.fit(mris, labels)
+	# print (validation_set)
+	history = model.fit(mris, labels, validation_set=validation_set)
 
 	#Plot the accuracy and the f1 score
 	utils.plot(history, model_name, num_epochs)
 
 	#Save the model history for later inspection
-	with open('/train_history_' + model_name + "_" + str(num_epochs), "wb") as history_file:
+	with open('./train_history_' + model_name + "_" + str(num_epochs), "wb") as history_file:
 		pickle.dump(history.history, file_pi)
 
 if __name__ == '__main__':
