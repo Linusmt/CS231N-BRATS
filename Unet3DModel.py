@@ -74,7 +74,7 @@ class Unet3DModel():
 		self.model.summary()
 
 	def fit(self, X_train, Y_train):
-		earlystopper = EarlyStopping(patience=15, verbose=1)
+		earlystopper = EarlyStopping(patience=5, verbose=1)
 		checkpointer = ModelCheckpoint('model-unet3d-1.h5', verbose=1, save_best_only=True)
 		return self.model.fit(x=X_train, y=Y_train, validation_split=0.2, epochs=self.epochs, batch_size=self.batch_size, callbacks=[earlystopper, checkpointer])
 
