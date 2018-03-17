@@ -5,6 +5,7 @@ import utils
 from baseline import BaselineModel
 from Unet3DModel import Unet3DModel
 from Unet3D_Inception import Unet3DModelInception
+from ResNet50 import ResNet50Model
 
 #####
 import keras.backend as kb
@@ -59,6 +60,22 @@ def u3d(num_epochs=40):
 	return model, mris, labels, validation_set
 
 
+def resNet50(num_epochs=40):
+	print('=' * 80)
+	print('resNet50 MODEL')
+	print('=' * 80)
+
+	mris, labels = utils.get_brats_data(MRI_PATH, LABELS_PATH, IMAGE_SIZE, 'resNet50', True, False, shuffle=True)
+	
+	validation_set = (mris[:20,], labels[:20])
+	mris, labels  = utils.augment_data(mris[20:,], labels[20:,])
+
+
+	model = ResNet50Model(optimizer=Adam(1e-4),loss='binary_crossentropy', metrics=METRICS, epochs=num_epochs, batch_size=1)
+	model.build_model(mris.shape[1:])
+	return model, mris, labels, validation_set
+
+
 def u3d_inception(num_epochs=40):
 	print('=' * 80)
 	print('Unet3D_Inception MODEL')
@@ -77,7 +94,7 @@ def u3d_inception(num_epochs=40):
 import argparse
 
 
-MODELS = {"baseline":baseline, "u3d":u3d, "u3d_inception": u3d_inception }
+MODELS = {"baseline":baseline, "u3d":u3d, "u3d_inception": u3d_inception , "resNet50": resNet50}
 
 def main(args):
 	#Set the seed for consistent runs
