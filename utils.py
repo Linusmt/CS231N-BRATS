@@ -3,8 +3,8 @@ import skimage.io as io
 import skimage.transform as transform
 import glob
 import numpy as np
-import matplotlib
-matplotlib.use('Agg') # to save plots as images
+# import matplotlib
+# matplotlib.use('Agg') # to save plots as images
 import matplotlib.pyplot as plt
 import tensorflow as tf
 ############################# BRATS #################################
@@ -25,10 +25,11 @@ def brats_preprocess_mri(images, newsize, name='unknown', save=False):
 
 def brats_preprocess_labels(images, newsize, name='unknown', save=False):
 	preprocessed = []
+	print (images)
 	for i in images:
+		i[i != 4] = 0
 		i[i == 4] = 1
-		i[i != 1] = 0
-		preprocessed.append(transform.resize(i, newsize, mode='constant').astype('float32'))
+		preprocessed.append(transform.resize(i, newsize, mode='constant', preserve_range=True).astype('float32'))
 	if save:
 		if name == 'unknown': print('Cannot save file unless new filename is specified')
 		else: np.save(name, np.array(preprocessed)[..., np.newaxis].astype('float32'))
@@ -40,12 +41,12 @@ def get_brats_data(mri_path, labels_path, image_size, model_name='unknown', prep
 	labels = brats_load_data(labels_path, 'labels', preprocessed)
 	# Preprocess data (and save for later use)
 	if not preprocessed:
-		mris = brats_preprocess_mri(mris, image_size, model_name + '_mris_' +str(image_size[0]), save)
-		labels = brats_preprocess_labels(labels, image_size, model_name + '_labels_' +str(image_size[0]), save)
+		mris = brats_preprocess_mri(mris, image_size, model_name + '_mris_' +str(image_size), save)
+		labels = brats_preprocess_labels(labels, image_size, model_name + '_labels_' +str(image_size), save)
 	labels = np.round(labels)
 
 	if shuffle:
-		order = np.random.permutation(mris.shape[0])
+		order = np.random.permutation(mris.shape)
 		mris, labels =  mris[order,], labels[order,]
 	
 
@@ -79,7 +80,7 @@ def weighted_cross_entropy_loss(pos_weight):
 	def _weighted_cross_entropy_loss(y_true, y_pred):
 		return tf.nn.weighted_cross_entropy_with_logits(y_true, y_pred, pos_weight)
 		# pos_loss = kb.flatten(y_true) * (-tf.log(tf.sigmoid(kb.flatten(y_pred))))*weights[1] 
-		# neg_loss = (1-kb.flatten(y_true))* (-tf.log(1- tf.sigmoid(kb.flatten(y_pred)))) * weights[0] 
+		# neg_loss = (1-kb.flatten(y_true))* (-tf.log(1- tf.sigmoid(kb.flatten(y_pred)))) * weights 
 		# return  kb.mean(pos_loss + neg_loss)		
 	return _weighted_cross_entropy_loss
 

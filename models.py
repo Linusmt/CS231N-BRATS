@@ -13,6 +13,7 @@ import skimage.io as io
 import skimage.transform as transform
 import glob
 import numpy as np
+import argparse
 #####
 
 #MRI_PATH = './BRATS2015_Training/HGG/**/*T1c*.mha'
@@ -26,75 +27,32 @@ LABELS_PATH = 'baseline_labels.npy'
 # LABELS_PATH = './baseline_labels_128.npy'
 METRICS = ['binary_accuracy',  utils.mean_iou,  utils.brats_f1_score]
 
-def baseline(num_epochs=40):
-	print('=' * 80)
-	print('BASELINE MODEL')
-	print('=' * 80)
 
-	# mris, labels = utils.get_brats_data(MRI_PATH, LABELS_PATH, IMAGE_SIZE, 'baseline', False, True, shuffle=True)
+MRI_LOAD_PATH = './BRATS2015_Training/HGG/**/*T1c*.mha'
+LABELS_LOAD_PATH = './BRATS2015_Training/HGG/**/*OT*.mha'
+MRI_PATH = 'baseline_mris'
+LABELS_PATH = 'baseline_labels'	
 
+METRICS = ['binary_accuracy',  utils.mean_iou,  utils.brats_f1_score]
+MODELS = {"baseline":BaselineModel, "u3d":Unet3DModel, "u3d_inception": Unet3DModelInception, "resNet50": ResNet50Model }
 
-	mris, labels = utils.get_brats_data(MRI_PATH, LABELS_PATH, IMAGE_SIZE, 'baseline', True, False, shuffle=True)
+def load_data(image_size, preprocessed_data=False, augment_data=False):
 
-	validation_set = (mris[:20,], labels[:20])
-	mris, labels  = (mris[20:,], labels[20:,])
+	if not preprocessed_data:
+		_, _ = utils.get_brats_data(MRI_LOAD_PATH, LABELS_LOAD_PATH, image_size, 'baseline', save=True, preprocessed=True, shuffle=True)
 
-	model = BaselineModel(optimizer=Adam(1e-4),loss='binary_crossentropy', metrics=METRICS, epochs=num_epochs, batch_size=1)
-	model.build_model(mris.shape[1:])
+	#Paths for the MRI data for the given image size 
+	mri_path = MRI_PATH + "_" + str(image_size) +".npy"
+	labels_path = LABELS_PATH + "_" + str(image_size) +".npy"
 
-	return model, mris, labels, validation_set
+	mris, labels = utils.get_brats_data(mri_path, labels_path, image_size, 'baseline', save=False, preprocessed=False, shuffle=False)
+	validation_set = (mris[:20,], labels[:20,])
+	if augment_data:
+		mris, labels  = utils.augment_data(mris[20:,], labels[20:,])
 
-def u3d(num_epochs=40):
-	print('=' * 80)
-	print('Unet3DModel MODEL')
-	print('=' * 80)
-
-	mris, labels = utils.get_brats_data(MRI_PATH, LABELS_PATH, IMAGE_SIZE, 'u3d', True, False, shuffle=True)
-	
-	validation_set = (mris[:20,], labels[:20])
-	mris, labels  = utils.augment_data(mris[20:,], labels[20:,])
+	return mris, labels, validation_set
 
 
-	model = Unet3DModel(optimizer=Adam(1e-4),loss='binary_crossentropy', metrics=METRICS, epochs=num_epochs, batch_size=1)
-	model.build_model(mris.shape[1:])
-	return model, mris, labels, validation_set
-
-
-def resNet50(num_epochs=40):
-	print('=' * 80)
-	print('resNet50 MODEL')
-	print('=' * 80)
-
-	mris, labels = utils.get_brats_data(MRI_PATH, LABELS_PATH, IMAGE_SIZE, 'resNet50', True, False, shuffle=True)
-	
-	validation_set = (mris[:20,], labels[:20])
-	mris, labels  = utils.augment_data(mris[20:,], labels[20:,])
-
-
-	model = ResNet50Model(optimizer=Adam(1e-4),loss='binary_crossentropy', metrics=METRICS, epochs=num_epochs, batch_size=1)
-	model.build_model(mris.shape[1:])
-	return model, mris, labels, validation_set
-
-
-def u3d_inception(num_epochs=40):
-	print('=' * 80)
-	print('Unet3D_Inception MODEL')
-	print('=' * 80)
-
-	mris, labels = utils.get_brats_data(MRI_PATH, LABELS_PATH, IMAGE_SIZE, 'u3d_inception', True, False, shuffle=True)
-
-	validation_set = (mris[:20,], labels[:20])
-	mris, labels  = utils.augment_data(mris[20:,], labels[20:,])
-
-	model = Unet3DModelInception(optimizer=Adam(1e-4),loss='binary_crossentropy', metrics=METRICS, epochs=num_epochs, batch_size=1)
-	model.build_model(mris.shape[1:])
-	return model, mris, labels, validation_set
-# Main function will run and test different models
-
-import argparse
-
-
-MODELS = {"baseline":baseline, "u3d":u3d, "u3d_inception": u3d_inception , "resNet50": resNet50}
 
 def main(args):
 	#Set the seed for consistent runs
@@ -102,27 +60,46 @@ def main(args):
 
 	#Take the arguments from the command line
 	model_name = args.model
-	num_epochs = args.num_epochs
+	num_epochs = args.epochs
+
+	mris, labels, validation_set = load_data(args.image_size, args.preprocessed, args.augment_data)
 
 	#Create the model
-	model, mris, labels, validation_set = MODELS[model_name](num_epochs=num_epochs)
+	print (mris.shape)
+	print (labels.shape)
+	model_generator = MODELS[model_name]
+	model = model_generator(optimizer=Adam(args.lr),loss='binary_crossentropy', metrics=METRICS, epochs=num_epochs, batch_size=1)
+	model.build_model(mris.shape[1:])
 	model.compile()
-	# print (validation_set)
+
+	#Fit the models
 	history = model.fit(mris, labels, validation_set=validation_set)
 
-	#Plot the accuracy and the f1 score
-	utils.plot(history, model_name, num_epochs)
+	#Save the model training history for later inspection
+	with open("_".join(['./train_history', model_name, str(num_epochs), str(args.image_size),"aug" if args.augment_data else "notaug"])+".pkl", "wb") as history_file:
+		pickle.dump(history.history, history_file)
 
-	#Save the model history for later inspection
-	with open('./train_history_' + model_name + "_" + str(num_epochs), "wb") as history_file:
-		pickle.dump(history.history, file_pi)
+	#Plot the accuracy and the f1 score
+	utils.plot(history, model_name, num_epochs, args.image_size)
+
+
+
+
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Process some integers.')
 	parser.add_argument('--model', type=str, nargs='?', default="baseline",
-	                    help='name of model')
-	parser.add_argument('--num_epochs', type=int, nargs='?', default=10,
+	                    help='name of model, possibilities are: baseline, u3d, u3d_inception')
+	parser.add_argument('--epochs', type=int, nargs='?', default=100,
 	                    help='number of desired epochs')
+	parser.add_argument('--preprocessed', type=bool, nargs='?', default=False,
+	                    help='whether to load the dataset again and preprocess')	
+	parser.add_argument('--image_size', type=int, nargs='?', default=32,
+	                    help='new image size to be chosen')
+	parser.add_argument('--augment_data', type=bool, nargs='?', default=False,
+	                    help='whether to use data augmentation')	
+	parser.add_argument('--lr', type=float, nargs='?', default=1e-4,
+	                    help='learning rate as a float')
 	args = parser.parse_args()
 
 	main(args)

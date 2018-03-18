@@ -39,9 +39,6 @@ class ResNet50Model():
 		        kernel_initializer="he_normal", padding="valid",
 		        kernel_regularizer=l2(1e-4)
 		        )(input)
-		        print input
-		        print residual
-		        print shortcut
 		#if (shortcut.shape== residual.shape): return add([shortcut, residual])
 		#return residual
 		return add([shortcut, residual])
@@ -86,7 +83,7 @@ class ResNet50Model():
 
 	def batch_norm_relu(self, input):
 		t = BatchNormalization(axis=4)(input)
-	   	return Activation("relu")(t)
+		return Activation("relu")(t)
 
 
 	# This function defines the baseline model in Keras
@@ -103,21 +100,21 @@ class ResNet50Model():
 
 
 		D3 = self.residual_block3d(D2, filters=64,kernel_regularizer=l2(reg_factor),repetitions=repetitions[0], is_first_layer = True)(D2)
-	   	D3 = self.residual_block3d(D3, filters=128,kernel_regularizer=l2(reg_factor),repetitions=repetitions[1], is_first_layer = False)(D3)
-	   	D3 = self.residual_block3d(D3, filters=256,kernel_regularizer=l2(reg_factor),repetitions=repetitions[2], is_first_layer = False)(D3)
-	   	D3 = self.residual_block3d(D3, filters=512,kernel_regularizer=l2(reg_factor),repetitions=repetitions[3], is_first_layer = False)(D3)
+		D3 = self.residual_block3d(D3, filters=128,kernel_regularizer=l2(reg_factor),repetitions=repetitions[1], is_first_layer = False)(D3)
+		D3 = self.residual_block3d(D3, filters=256,kernel_regularizer=l2(reg_factor),repetitions=repetitions[2], is_first_layer = False)(D3)
+		D3 = self.residual_block3d(D3, filters=512,kernel_regularizer=l2(reg_factor),repetitions=repetitions[3], is_first_layer = False)(D3)
 
-	   	#Axis could be 1
-	   	D4 = self.batch_norm_relu(D3)
+		#Axis could be 1
+		D4 = self.batch_norm_relu(D3)
 
-	   	D5 = AveragePooling3D(pool_size=(D3._keras_shape[1], D3._keras_shape[2], D3._keras_shape[3]),strides=(1,1,1), padding="same")(D4)
-	   	D5 = Flatten()(D5)
+		D5 = AveragePooling3D(pool_size=(D3._keras_shape[1], D3._keras_shape[2], D3._keras_shape[3]),strides=(1,1,1), padding="same")(D4)
+		D5 = Flatten()(D5)
 
-	   	
-	   	#pred = Dense(units=num_outputs, kernel_initializer="he_normal", activation="sigmoid", kernel_regularizer=l2(reg_factor))(D5)
+		
+		#pred = Dense(units=num_outputs, kernel_initializer="he_normal", activation="sigmoid", kernel_regularizer=l2(reg_factor))(D5)
 	    
-	   	pred = Conv3D(filters=1, kernel_size=1, activation='sigmoid')(D5)
-	   	model = Model(inputs=X_input, outputs=pred, name='ResNet50')
+		pred = Conv3D(filters=1, kernel_size=1, activation='sigmoid')(D5)
+		model = Model(inputs=X_input, outputs=pred, name='ResNet50')
 
 		self.model = model
 
