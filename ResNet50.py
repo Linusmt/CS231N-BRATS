@@ -7,6 +7,8 @@ from keras.models import Input, Model
 from keras.layers import Conv3D,BatchNormalization, Concatenate, MaxPooling3D, AveragePooling3D, UpSampling3D, Activation, Reshape, Permute
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.regularizers import l2
+from keras.layers.merge import add
+from keras import backend as K
 
 class ResNet50Model():
 	# Params:
@@ -22,8 +24,30 @@ class ResNet50Model():
 		self.model = None
 
 
+	def shortcut3d(self, input, residual):
+		stride_dim1 = input._keras_shape[1] // residual._keras_shape[1]
+		stride_dim2 = input._keras_shape[2] // residual._keras_shape[2]
+		stride_dim3 = input._keras_shape[3] // residual._keras_shape[3]
+		equal_channels = residual._keras_shape[4]  == input._keras_shape[4]
 
-	def bottleneck(filters, strides=(1, 1, 1), kernel_regularizer=l2(1e-4), is_first_block_of_first_layer=False):
+		shortcut = input
+		if stride_dim1 > 1 or stride_dim2 > 1 or stride_dim3 > 1 or not equal_channels:
+			shortcut = Conv3D(
+		        filters=residual._keras_shape[4],
+		        kernel_size=(1, 1, 1),
+		        strides=(stride_dim1, stride_dim2, stride_dim3),
+		        kernel_initializer="he_normal", padding="valid",
+		        kernel_regularizer=l2(1e-4)
+		        )(input)
+		        print input
+		        print residual
+		        print shortcut
+		#if (shortcut.shape== residual.shape): return add([shortcut, residual])
+		#return residual
+		return add([shortcut, residual])
+
+
+	def bottleneck(self, input, filters, strides=(1, 1, 1), kernel_regularizer=l2(1e-4), is_first_block_of_first_layer=False):
 		if is_first_block_of_first_layer:
 		    # don't repeat bn->relu since we just did bn->relu->maxpool
 		    conv_1_1 = Conv3D(filters=filters, kernel_size=(1, 1, 1),
@@ -32,29 +56,37 @@ class ResNet50Model():
 		                      kernel_regularizer=kernel_regularizer
 		                      )(input)
 		else:
-		    conv_1_1 = _bn_relu_conv3d(filters=filters, kernel_size=(1, 1, 1),
+		    conv_1_1 = self.batch_norm_relu(input)
+		    conv_1_1 = Conv3D(filters=filters, kernel_size=(1, 1, 1),
 		                               strides=strides,
 		                               kernel_regularizer=kernel_regularizer
-		                               )(input)
+		                               )(conv_1_1)
 
-		conv_3_3 = _bn_relu_conv3d(filters=filters, kernel_size=(3, 3, 3),
-		                           kernel_regularizer=kernel_regularizer
-		                           )(conv_1_1)
-		residual = _bn_relu_conv3d(filters=filters * 4, kernel_size=(1, 1, 1),
+		conv_3_3 = self.batch_norm_relu(conv_1_1)
+		conv_3_3 = Conv3D(filters=filters, kernel_size=(3, 3, 3),
 		                           kernel_regularizer=kernel_regularizer
 		                           )(conv_3_3)
 
-		return _shortcut3d(input, residual)
+		residual = self.batch_norm_relu(conv_3_3)
+		residual = Conv3D(filters=filters * 4, kernel_size=(1, 1, 1),
+		                           kernel_regularizer=kernel_regularizer
+		                           )(residual)
+
+		return self.shortcut3d(input, residual)
 
 
-	def residual_block3d(filters, kernel_regularizer, repetitions, is_first_layer=False):
+	def residual_block3d(self, input, filters, kernel_regularizer, repetitions, is_first_layer=False):
 		for i in range(repetitions):
 		    strides = (1, 1, 1)
 		    if i == 0 and not is_first_layer:
 		        strides = (2, 2, 2)
-		    input = bottleneck(filters=filters, strides=strides,kernel_regularizer=kernel_regularizer,is_first_block_of_first_layer=(is_first_layer and i == 0))(input)
+		    input = self.bottleneck(input, filters=filters, strides=strides,kernel_regularizer=kernel_regularizer,is_first_block_of_first_layer=(is_first_layer and i == 0))(input)
 		return input
 
+
+	def batch_norm_relu(self, input):
+		t = BatchNormalization(axis=4)(input)
+	   	return Activation("relu")(t)
 
 
 	# This function defines the baseline model in Keras
@@ -62,21 +94,21 @@ class ResNet50Model():
 		reg_factor = 1e-4
 		repetitions = [3, 4, 6, 3]
 		# Define the input placeholder as a tensor with shape input_shape. Think of this as your input image!
-		X_input = Input(input_shape)
+		X_input = Input(shape = input_shape)
 		
-		D1 = conv_3d(filters=64, kernel_size=(7, 7, 7), strides=(2, 2, 2), kernel_regularizer=l2(reg_factor))(input)
-	
+		D1 = Conv3D(filters=64, kernel_size=(7, 7, 7), strides=(2, 2, 2), kernel_regularizer=l2(reg_factor))(X_input)
+		D1 = self.batch_norm_relu(D1)
+
 		D2 =  MaxPooling3D(pool_size=(3, 3, 3), strides=(2, 2, 2), padding="same")(D1)
 
 
-		D3 = residual_block3d(filters=64,kernel_regularizer=l2(reg_factor),repetitions=repetitions[0], is_first_layer = True)(D2)
-	   	D3 = residual_block3d(filters=128,kernel_regularizer=l2(reg_factor),repetitions=repetitions[1], is_first_layer = False)(D3)
-	   	D3 = residual_block3d(filters=256,kernel_regularizer=l2(reg_factor),repetitions=repetitions[2], is_first_layer = False)(D3)
-	   	D3 = residual_block3d(filters=512,kernel_regularizer=l2(reg_factor),repetitions=repetitions[3], is_first_layer = False)(D3)
+		D3 = self.residual_block3d(D2, filters=64,kernel_regularizer=l2(reg_factor),repetitions=repetitions[0], is_first_layer = True)(D2)
+	   	D3 = self.residual_block3d(D3, filters=128,kernel_regularizer=l2(reg_factor),repetitions=repetitions[1], is_first_layer = False)(D3)
+	   	D3 = self.residual_block3d(D3, filters=256,kernel_regularizer=l2(reg_factor),repetitions=repetitions[2], is_first_layer = False)(D3)
+	   	D3 = self.residual_block3d(D3, filters=512,kernel_regularizer=l2(reg_factor),repetitions=repetitions[3], is_first_layer = False)(D3)
 
 	   	#Axis could be 1
-	   	D4 = BatchNormalization(axis=4)(D3)
-	   	D4 = Activation("relu")(D4)
+	   	D4 = self.batch_norm_relu(D3)
 
 	   	D5 = AveragePooling3D(pool_size=(D3._keras_shape[1], D3._keras_shape[2], D3._keras_shape[3]),strides=(1,1,1), padding="same")(D4)
 	   	D5 = Flatten()(D5)

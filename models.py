@@ -15,11 +15,11 @@ import glob
 import numpy as np
 #####
 
-# MRI_PATH = './BRATS2015_Training/HGG/**/*T1c*.mha'
-# LABELS_PATH = './BRATS2015_Training/HGG/**/*OT*.mha'
+#MRI_PATH = './BRATS2015_Training/HGG/**/*T1c*.mha'
+#LABELS_PATH = './BRATS2015_Training/HGG/**/*OT*.mha'
 IMAGE_SIZE = (64, 64, 64)
-MRI_PATH = 'baseline_mris_64.npy'
-LABELS_PATH = 'baseline_labels_64.npy'	
+MRI_PATH = 'baseline_mris.npy'
+LABELS_PATH = 'baseline_labels.npy'	
 
 # IMAGE_SIZE = (32, 32, 32)
 # MRI_PATH = './baseline_mris_128.npy'
