@@ -15,8 +15,9 @@ class ResNet50Model():
 	# optimizer: keras optimizer (e.g. Adam)
 	# loss: loss function for optimization
 	# metrics: list of metrics (e.g. ['accuracy'])
-	def __init__(self, optimizer, loss, metrics=['accuracy'], epochs=1, batch_size=16):
+	def __init__(self, optimizer, loss, metrics=['accuracy'], epochs=1, batch_size=16, model_name="unknown"):
 		self.optimizer = optimizer
+		self.model_name = model_name
 		self.loss = loss
 		self.metrics = metrics
 		self.epochs = epochs
@@ -122,13 +123,16 @@ class ResNet50Model():
 		self.model.compile(optimizer=self.optimizer, loss=self.loss, metrics=self.metrics)
 		self.model.summary()
 
-	def fit(self, X_train, Y_train, validation_set=None):
-		earlystopper = EarlyStopping(patience=5, verbose=1)
-		checkpointer = ModelCheckpoint('model-resnet50-1', verbose=1, save_best_only=True)
+	def fit(self, X_train, Y_train, validation_set=None, global_step=None):
+		earlystopper = EarlyStopping(patience=10, verbose=1)
+		checkpointer = ModelCheckpoint('model-' + self.model_name+ '-1.h5', verbose=1, save_best_only=True)
 		if validation_set is None:
 			return self.model.fit(x=X_train, y=Y_train, validation_split=0.2, epochs=self.epochs, batch_size=self.batch_size, callbacks=[earlystopper, checkpointer])
 		else:
-			return self.model.fit(x=X_train, y=Y_train, validation_data=validation_set, epochs=self.epochs, batch_size=self.batch_size, callbacks=[earlystopper, checkpointer])
+			if global_step is not None:
+				return self.model.fit(x=X_train, y=Y_train, validation_data=validation_set, epochs=self.epochs, batch_size=self.batch_size, callbacks=[earlystopper, checkpointer], global_step=global_step)
+			else:
+				return self.model.fit(x=X_train, y=Y_train, validation_data=validation_set, epochs=self.epochs, batch_size=self.batch_size, callbacks=[earlystopper, checkpointer])
 
 	def evaluate(self, X_test, Y_test):
 		return self.model.evaluate(x=X_test, y=Y_test)
