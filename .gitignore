@@ -1,0 +1,6 @@
+*.npy
+*.h5
+data/*
+*.pkl
+data
+BRATS_Project
