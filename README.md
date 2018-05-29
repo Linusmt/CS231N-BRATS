@@ -1,4 +1,4 @@
-# CS-230-Project
+# CS 231N Project
 
 ## Setup
 The requirements files are not yet fully updated and many packages must be install using pip alone.
