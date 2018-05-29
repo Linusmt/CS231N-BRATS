@@ -6,6 +6,7 @@ from baseline import BaselineModel
 from Unet3DModel import Unet3DModel
 from Unet3D_Inception import Unet3DModelInception
 from ResNet50 import ResNet50Model
+from UResModel import UResModel
 
 #####
 import keras.backend as kb
@@ -26,7 +27,7 @@ IMAGE_SIZE = (64, 64, 64)
 METRICS = ['binary_accuracy',  utils.mean_iou,  utils.brats_f1_score, utils.precision, utils.recall]
 
 METRICS = ['binary_accuracy',  utils.mean_iou,  utils.brats_f1_score, utils.precision, utils.recall]
-MODELS = {"baseline":BaselineModel, "u3d":Unet3DModel, "u3d_inception": Unet3DModelInception, "resNet50": ResNet50Model }
+MODELS = {"baseline":BaselineModel, "u3d":Unet3DModel, "u3d_inception": Unet3DModelInception, "ures": UResModel, "resNet50": ResNet50Model }
 
 
 
