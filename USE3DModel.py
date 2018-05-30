@@ -4,7 +4,7 @@ import random
 import keras
 from keras.optimizers import Adam
 from keras.models import Input, Model
-from keras.layers import Conv3D,BatchNormalization, Concatenate, MaxPooling3D, AveragePooling3D, UpSampling3D, Activation, Reshape, Permute
+from keras.layers import Conv3D,BatchNormalization, Concatenate, MaxPooling3D, AveragePooling3D, UpSampling3D, Activation, Reshape, Permute, Multiply
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 class USE3DModel():
@@ -21,11 +21,13 @@ class USE3DModel():
 		self.batch_size = batch_size
 		self.model = None
 
-	def Squeeze_excitation_layer(self, input_x, out_dim, ratio, layer_name):
+	def Squeeze_excitation_layer(self, input_x, out_dim, ratio):
 
-		X1 = keras.layers.GlobalAveragePooling2D(data_format=None)(input_x)
 
-		X1 = keras.layers.Dense(units=out_dim / ratio, activation='relu', use_bias=True, kernel_initializer='glorot_uniform',
+		# TEST = keras.layer_global_average_pooling_3d(input_x)
+		X1 = keras.layers.GlobalAveragePooling3D(data_format=None)(input_x)
+
+		X1 = keras.layers.Dense(units=int(out_dim / ratio), activation='relu', use_bias=True, kernel_initializer='glorot_uniform',
 		                   bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
 		                   activity_regularizer=None, kernel_constraint=None, bias_constraint=None) (X1)
 
@@ -35,29 +37,27 @@ class USE3DModel():
 		                        bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
 		                        activity_regularizer=None, kernel_constraint=None, bias_constraint=None)(X1)
 
-
-		excitation = Fully_connected(squeeze, units=out_dim / ratio, layer_name=layer_name + '_fully_connected1')
-		excitation = Relu(excitation)
-		excitation = Fully_connected(excitation, units=out_dim, layer_name=layer_name + '_fully_connected2')
-		excitation = Sigmoid(excitation)
-		excitation = tf.reshape(excitation, [-1, 1, 1, out_dim])
-
-		scale = input_x * X1
+		scale = Multiply()([input_x, X1])
 
 		return scale
 
 	def double_block(self, X, f, kernel_size, s):
 		X1 = Conv3D(filters=f[0], kernel_size=kernel_size, strides=(s,s,s), padding='same', activation='elu')(X)
+
+		# X1 = self.Squeeze_excitation_layer(X1, f[0], 16)
+
 		X1 = BatchNormalization(axis = 4)(X1)
 
 		X1 = Conv3D(filters=f[1], kernel_size=kernel_size, strides=(s,s,s), padding='same', activation='elu')(X1)
+
+		X1 = self.Squeeze_excitation_layer(X1, f[1], 16)
+
 		X1 = BatchNormalization(axis = 4)(X1)
 
 		return X1
 
 	# This function defines the baseline model in Keras
 	def build_model(self, input_shape):
-		print("USE MODEL")
 
 		# Define the input placeholder as a tensor with shape input_shape. Think of this as your input image!
 		X_input = Input(input_shape)
