@@ -28,7 +28,7 @@ class USE3DModel():
 	def double_block(self, X, f, kernel_size, s):
 		X1 = Conv3D(filters=f[0], kernel_size=kernel_size, strides=(s,s,s), padding='same', activation='elu')(X)
 
-		# X1 = self.Squeeze_excitation_layer(X1, f[0], 16)
+		X1 = self.Squeeze_excitation_layer(X1, f[0], 16)
 
 		X1 = BatchNormalization(axis = 4)(X1)
 
