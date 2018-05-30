@@ -8,7 +8,7 @@ from keras.layers import Conv3D,BatchNormalization, Concatenate, MaxPooling3D, A
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 
-def Squeeze_excitation_layer(self, input_x, out_dim, ratio):
+def Squeeze_excitation_layer(input_x, out_dim, ratio):
     # TEST = keras.layer_global_average_pooling_3d(input_x)
     X1 = keras.layers.GlobalAveragePooling3D(data_format=None)(input_x)
 
