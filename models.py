@@ -8,6 +8,9 @@ from Unet3D_Inception import Unet3DModelInception
 from ResNet50 import ResNet50Model
 from URes3DModel import URes3DModel
 from USE3DModel import USE3DModel
+from USEnet3D_Inception import USEnet3DModelInception
+from USERes3DModel import USERes3DModel
+
 
 #####
 import keras.backend as kb
@@ -33,6 +36,8 @@ MODELS = {"baseline":BaselineModel,
 		  "u3d_inception": Unet3DModelInception, 
 		  "ures": URes3DModel,
 		  "use": USE3DModel,
+		  "use_inception": USEnet3DModelInception,
+		  "use_res": USERes3DModel,
 		  "resNet50": ResNet50Model
 		 }
 
