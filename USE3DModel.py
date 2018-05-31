@@ -4,7 +4,7 @@ import random
 import keras
 from keras.optimizers import Adam
 from keras.models import Input, Model
-from keras.layers import Conv3D,BatchNormalization, Concatenate, MaxPooling3D, AveragePooling3D, UpSampling3D, Activation, Reshape, Permute, Multiply
+from keras.layers import Conv3D,BatchNormalization, Concatenate, MaxPooling3D, AveragePooling3D, UpSampling3D, Activation, Reshape, Permute, Multiply, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from SE_module import Squeeze_excitation_layer
 
@@ -39,6 +39,8 @@ class USE3DModel():
 		X1 = self.Squeeze_excitation_layer(X1, f[1], 16)
 
 		X1 = BatchNormalization(axis = 4)(X1)
+
+		X1 = Dropout(self.dropout)(X1)
 
 		return X1
 

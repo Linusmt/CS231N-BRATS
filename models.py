@@ -70,8 +70,9 @@ def main(args):
 
 	#Create the model
 	if args.test_model:
-		X = X[0:10,]
-		y = y[0:10,]
+		X = X[0:5,]
+		y = y[0:5,]
+		validation_set = (validation_set[0][0:3,], validation_set[1][0:3,])
 
 	print (X.shape)
 	print (y.shape)
@@ -79,15 +80,19 @@ def main(args):
 	model_generator = MODELS[model_name]
 	global_step = tf.Variable(0, name="global_step", trainable=False)
 	decay_step = X.shape[0]/4
-	lr = tf.train.exponential_decay(args.lr, global_step, decay_step, 0.96)
+	lr = tf.train.exponential_decay(args.lr, global_step, decay_step, 0.98)
 
 	model = model_generator(optimizer=Adam(lr),loss='binary_crossentropy', metrics=METRICS, epochs=num_epochs, batch_size=1, model_name=model_name, use_dropout=use_dropout)
 	model.build_model(X.shape[1:])
 	model.compile()
 
 	history_file_name = "_".join(['model', model_name, str(num_epochs), str(args.image_size), "dropout_" + str(use_dropout) if use_dropout != 0 else "","test" if args.test_model else ""])
+	
+	if args.test_model:
+		checkpointer = ModelCheckpoint("./tmp/" +history_file_name + '-1.h5', verbose=1, save_best_only=True)
+	else:
+		checkpointer = ModelCheckpoint("./models/" +history_file_name + '-1.h5', verbose=1, save_best_only=True)
 
-	checkpointer = ModelCheckpoint(history_file_name + '-1.h5', verbose=1, save_best_only=True)
 	time_callback = TimeHistory()
 	earlystopper = EarlyStopping(patience=5, verbose=1)
 
@@ -96,9 +101,15 @@ def main(args):
 
 	history.history["times"] = time_callback.times
 	history.history["flags"] = args
+
+
 	#Save the model training history for later inspection
-	with open(history_file_name+".pkl", "wb") as history_file:
-		pickle.dump(history.history, history_file)
+	if args.test_model:
+		with open("./tmp/" +history_file_name+".pkl", "wb") as history_file:
+			pickle.dump(history.history, history_file)
+	else:
+		with open("./history/" +history_file_name+".pkl", "wb") as history_file:
+			pickle.dump(history.history, history_file)
 
 	#Plot the accuracy and the f1 score
 	utils.plot(history, model_name, num_epochs, args.image_size)

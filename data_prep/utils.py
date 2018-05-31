@@ -84,8 +84,8 @@ def get_brats_data(mri_path, labels_path, image_size, model_name='unknown', prep
 	return mris, labels
 
 def augment_data(X, Y):
-	new_X = [X, np.flip(X, axis=1), np.flip(X, axis=2), np.flip(X, axis=3)]
-	new_Y = [Y, np.flip(Y, axis=1), np.flip(Y, axis=2), np.flip(Y, axis=3)]
+	new_X = [X, np.flip(X, axis=1)]#, np.flip(X, axis=2), np.flip(X, axis=3)]
+	new_Y = [Y, np.flip(Y, axis=1)]#, np.flip(Y, axis=2), np.flip(Y, axis=3)]
 	new_X = np.concatenate(new_X, axis=0)
 	new_Y = np.concatenate(new_Y, axis=0)
 	return new_X,new_Y

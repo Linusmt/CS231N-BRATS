@@ -4,7 +4,7 @@ import random
 import keras
 from keras.optimizers import Adam
 from keras.models import Input, Model
-from keras.layers import Conv3D,BatchNormalization, Concatenate, MaxPooling3D, AveragePooling3D, UpSampling3D, Activation, Reshape, Permute, Add
+from keras.layers import Conv3D,BatchNormalization, Concatenate, MaxPooling3D, AveragePooling3D, UpSampling3D, Activation, Reshape, Permute, Add, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 class URes3DModel():
@@ -21,13 +21,14 @@ class URes3DModel():
 		self.batch_size = batch_size
 		self.model = None
 		self.dropout = use_dropout
-		
+
 	def double_block(self, X, f, kernel_size, s):
 		X1 = Conv3D(filters=f[0], kernel_size=kernel_size, strides=(s,s,s), padding='same', activation='elu')(X)
 		X1 = BatchNormalization(axis = 4)(X1)
 
 		X1 = Conv3D(filters=f[1], kernel_size=kernel_size, strides=(s,s,s), padding='same', activation='elu')(X1)
 		X1 = BatchNormalization(axis = 4)(X1)
+		X1 = Dropout(self.dropout)(X1)
 
 		return X1
 

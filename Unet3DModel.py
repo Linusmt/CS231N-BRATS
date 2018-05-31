@@ -4,7 +4,7 @@ import random
 import keras
 from keras.optimizers import Adam
 from keras.models import Input, Model
-from keras.layers import Conv3D,BatchNormalization, Concatenate, MaxPooling3D, AveragePooling3D, UpSampling3D, Activation, Reshape, Permute
+from keras.layers import Conv3D,BatchNormalization, Concatenate, MaxPooling3D, AveragePooling3D, UpSampling3D, Activation, Reshape, Permute, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 class Unet3DModel():
@@ -29,7 +29,7 @@ class Unet3DModel():
 
 		X1 = Conv3D(filters=f[1], kernel_size=kernel_size, strides=(s,s,s), padding='same', activation='elu')(X1)
 		X1 = BatchNormalization(axis = 4)(X1)
-
+		X1 = Dropout(self.dropout)(X1)
 		return X1
 
 	# This function defines the baseline model in Keras

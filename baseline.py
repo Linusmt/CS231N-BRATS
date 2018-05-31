@@ -4,7 +4,7 @@ import random
 import keras
 from keras.optimizers import Adam
 from keras.models import Input, Model
-from keras.layers import Conv3D, Concatenate, MaxPooling3D, AveragePooling3D, UpSampling3D, Activation, Reshape, Permute
+from keras.layers import Conv3D, Concatenate, MaxPooling3D, AveragePooling3D, UpSampling3D, Activation, Reshape, Permute, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 
@@ -34,14 +34,19 @@ class BaselineModel():
 	    # [1] First CONV--POOL--ReLU layer
 	    X = Conv3D(filters=16, kernel_size=3, strides=(1,1,1), padding='same', activation='elu')(X_input)
 	    X = AveragePooling3D(strides=(1,1,1), padding="same")(X)
+	    X = Dropout(self.dropout)(X)
 
 	    # [2] Second CONV--POOL--ReLU layer
 	    X = Conv3D(filters=32, kernel_size=3, strides=(1,1,1), padding='same', activation='elu')(X)
 	    X = AveragePooling3D(strides=(1,1,1), padding="same")(X)
+	    X = Dropout(self.dropout)(X)
+
 
 	    # [3] Third CONV--POOL--ReLU layer
 	    X = Conv3D(filters=64, kernel_size=3, strides=(1,1,1), padding='same', activation='elu')(X)
 	    X = AveragePooling3D(strides=(1,1,1), padding="same")(X)
+	    X = Dropout(self.dropout)(X)
+
 
 	    # Final prediction (sigmoid)
 	    X = Conv3D(filters=1, kernel_size=1, activation='sigmoid')(X)
