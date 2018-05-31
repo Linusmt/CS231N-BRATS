@@ -84,11 +84,7 @@ def main(args):
 	model = model_generator(optimizer=Adam(lr),loss='binary_crossentropy', metrics=METRICS, epochs=num_epochs, batch_size=1, model_name=model_name, use_dropout=use_dropout)
 	model.build_model(X.shape[1:])
 	model.compile()
-	#Fit the models
-	# if validation_set is None:
-	# 	history = model.model.fit(x=X, y=Y, validation_split=0.2, epochs=self.epochs, batch_size=self.batch_size, callbacks=callbacks)
-	# else:
-	print(ModelCheckpoint)
+
 	history_file_name = "_".join(['model', model_name, str(num_epochs), str(args.image_size), "dropout_" + str(use_dropout) if use_dropout != 0 else "","test" if args.test_model else ""])
 
 	checkpointer = ModelCheckpoint(history_file_name + '-1.h5', verbose=1, save_best_only=True)
@@ -98,14 +94,12 @@ def main(args):
 	history = model.model.fit(x=X, y=y, validation_data=validation_set, epochs=num_epochs, batch_size=1, callbacks=[checkpointer, time_callback, earlystopper])
 
 
-	# history = model.fit(X, y, validation_set=validation_set)
 	history.history["times"] = time_callback.times
+	history.history["flags"] = args
 	#Save the model training history for later inspection
-	history_file_name = "_".join(['model', model_name, str(num_epochs), str(args.image_size), "dropout_" + str(use_dropout) if use_dropout != 0 else "","test" if args.test_model else ""])
 	with open(history_file_name+".pkl", "wb") as history_file:
 		pickle.dump(history.history, history_file)
-	# print(history.history.keys())
-	# print(history.history["times"])
+
 	#Plot the accuracy and the f1 score
 	utils.plot(history, model_name, num_epochs, args.image_size)
 
@@ -114,6 +108,7 @@ def main(args):
 
 
 if __name__ == '__main__':
+
 	parser = argparse.ArgumentParser(description='Process some integers.')
 	parser.add_argument('--model', type=str, nargs='?', default="baseline",
 	                    help='name of model, possibilities are: baseline, u3d, u3d_inception')
@@ -125,7 +120,7 @@ if __name__ == '__main__':
 	                    help='new image size to be chosen')
 	parser.add_argument('--augment_data', type=bool, nargs='?', default=False,
 	                    help='whether to use data augmentation')	
-	parser.add_argument('--lr', type=float, nargs='?', default=1e-3,
+	parser.add_argument('--lr', type=float, nargs='?', default=1e-4,
 	                    help='learning rate as a float')
 	parser.add_argument('--test_model', type=bool, nargs="?", default=False,
 						help="use a small dataset to make sure everything works ")

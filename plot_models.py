@@ -3,6 +3,8 @@ import pickle
 import numpy as np
 import glob
 import csv
+import argparse
+
 
 def plot(history, model_name, num_epochs, image_size):
 	# Create plot that plots model accuracy vs. epoch and save to the output directory
@@ -48,7 +50,7 @@ def plot(history, model_name, num_epochs, image_size):
 
 MODELS = [ "baseline", "u3d", "u3d_inception", "ures", "use","use_res" ]
 
-def plot_multiple_models(histories, model_names, num_epochs, image_size, metric="binary_accuracy"):
+def plot_multiple_models(histories, model_names, num_epochs, image_size, metric="binary_accuracy", save_path="outsput/table_default.csv"):
 	# Create plot that plots model accuracy vs. epoch
 	fig = plt.figure(figsize=(10, 10))
 
@@ -66,7 +68,7 @@ def plot_multiple_models(histories, model_names, num_epochs, image_size, metric=
 	plt.xlabel('epoch')
 	plt.legend(model_names, loc='upper left')
 	# plt.show()
-	plt.savefig('./output/' + metric + "-" + "_".join(MODELS) +"-" + str(num_epochs) +"-" + str(image_size) + '-history1.png'.format(32))
+	plt.savefig(save_path + '.png'.format(32))
 	print("Finished plotting " + metric )
 	plt.close(fig)
 
@@ -82,10 +84,9 @@ def load_history(model_name):
 
 
 
-def make_table(histories, model_names):
+def create_table(histories, model_names, save_path="table_default"):
 	average_times_per_epochs = []
 	metric_arr = [[] for x in METRICS]
-	print (metric_arr, len(METRICS))
 	for i in range(len(histories)):
 		history = histories[i]
 		model_name = model_names[i]
@@ -105,34 +106,68 @@ def make_table(histories, model_names):
 	data.append(["average_time_per_epoch"] + ['%.4f' % x for x in average_times_per_epochs])
 
 	for i in range(len(metric_arr)):
-
 		metric_results = metric_arr[i]
-		# print(METRICS[i])
 		data.append([METRICS[i]] + ['%.4f' % x for x in metric_results])
-		# print (  ", ".join(['%.4f' % x for x in metric_results]))
-	stringified_data = [",".join(x) for x in data]
 
-	with open("tables_temp", "w") as csvfile:
+	with open(save_path + ".csv", "w") as csvfile:
 		writer = csv.writer(csvfile)
 		for row in data:
 			print (", ".join(row))
 			writer.writerow(row)
 
-def plot_models(make_plots=True, create_table=True):
+def main(args):
+
+	make_plots = args.make_plots
+	make_table = args.make_table
+
 	histories = []
 	history_files_full_paths = glob.glob("./history/train_history" +"*" + str(NUM_EPOCHS) + "*" + str(IMAGE_SIZE) + "*")
 	history_files = [x.split("/")[2] for x in history_files_full_paths]
 	model_names = ["_".join(x[0:-3].split("_")[2:-1]) for x in history_files]
 
+
 	for history_file in history_files_full_paths:
 		histories.append(load_history(history_file))
 
 	if make_plots:
+		print ("\n************************************************")
+		print ("Making Plots")
+		print ("************************************************\n")
+
 		for metric in METRICS:
-			plot_multiple_models(histories, model_names, NUM_EPOCHS, IMAGE_SIZE, metric)
+			save_path = './output/' + metric + "-" + "_".join(MODELS) +"-" + str(NUM_EPOCHS) +"-" + str(IMAGE_SIZE) 
 
-	if create_table:
-		make_table(histories, model_names)
+			plot_multiple_models(histories, model_names, NUM_EPOCHS, IMAGE_SIZE, metric, save_path)
 
-print (plot_models(False))
 
+	if make_table:
+		save_path = './output/table_' + "_".join(MODELS) +"-" + str(NUM_EPOCHS) +"-" + str(IMAGE_SIZE) 
+
+		print ("\n************************************************")
+		print ("Making Tables")
+		print ("************************************************\n")
+
+		create_table(histories, model_names, save_path)
+
+# print (plot_models(False))
+
+if __name__ == '__main__':
+
+	parser = argparse.ArgumentParser(description='Process some integers.')
+	parser.add_argument('--epochs', type=int, nargs='?', default=30,
+	                    help='number of desired epochs')
+	parser.add_argument('--preprocess', type=bool,  default=False,
+	                    help='whether to load the dataset again and preprocess')	
+	parser.add_argument('--image_size', type=int, nargs='?', default=64,
+	                    help='new image size to be chosen')
+	parser.add_argument('--make_plots', type=bool, nargs='?', default=True,
+	                    help='whether to make_plots')		
+	parser.add_argument('--make_table', type=bool, nargs='?', default=True,
+	                    help='whether to make a table')	
+	parser.add_argument('--lr', type=float, nargs='?', default=1e-3,
+	                    help='learning rate as a float')
+	parser.add_argument('--use_dropout', type=float, nargs="?", default=0.0,
+						help="amount of dropout to use")
+	args = parser.parse_args()
+
+	main(args)
