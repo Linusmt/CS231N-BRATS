@@ -12,7 +12,7 @@ class URes3DModel():
 	# optimizer: keras optimizer (e.g. Adam)
 	# loss: loss function for optimization
 	# metrics: list of metrics (e.g. ['accuracy'])
-	def __init__(self, optimizer, loss, metrics=['accuracy'], epochs=1, batch_size=16, model_name="unknown"):
+	def __init__(self, optimizer, loss, metrics=['accuracy'], epochs=1, batch_size=16, model_name="unknown", use_dropout=0.0):
 		self.optimizer = optimizer
 		self.model_name = model_name
 		self.loss = loss
@@ -20,7 +20,8 @@ class URes3DModel():
 		self.epochs = epochs
 		self.batch_size = batch_size
 		self.model = None
-
+		self.dropout = use_dropout
+		
 	def double_block(self, X, f, kernel_size, s):
 		X1 = Conv3D(filters=f[0], kernel_size=kernel_size, strides=(s,s,s), padding='same', activation='elu')(X)
 		X1 = BatchNormalization(axis = 4)(X1)

@@ -12,7 +12,7 @@ class Unet3DModelInception():
 	# optimizer: keras optimizer (e.g. Adam)
 	# loss: loss function for optimization
 	# metrics: list of metrics (e.g. ['accuracy'])
-	def __init__(self, optimizer, loss, metrics=['accuracy'], epochs=1, batch_size=16, model_name="unknown"):
+	def __init__(self, optimizer, loss, metrics=['accuracy'], epochs=1, batch_size=16, model_name="unknown", use_dropout=0.0):
 		self.optimizer = optimizer
 		self.model_name = model_name
 		self.loss = loss
@@ -20,6 +20,8 @@ class Unet3DModelInception():
 		self.epochs = epochs
 		self.batch_size = batch_size
 		self.model = None
+		self.dropout = use_dropout
+
 
 
 	def inception_layer(self, X, filters):
@@ -35,7 +37,7 @@ class Unet3DModelInception():
 		X_Max = Conv3D(filters=filters[3], kernel_size=1, strides=(1,1,1), padding='same', activation='tanh')(X_Max)
 
 		out_layer = Concatenate()([X1, X33, X55, X_Max])
-		out_layer = Dropout(0.2)(out_layer)
+		out_layer = Dropout(self.dropout)(out_layer)
 		return out_layer
 
 	# This function defines the baseline model in Keras
@@ -54,15 +56,15 @@ class Unet3DModelInception():
 	    # D3 = self.inception_layer(D3, filters=[64, [64, 128], [16, 32], 64])
 	    D3 = self.inception_layer(D3, filters=[32, [32, 64], [8, 32], 32])
 
-	    # D4 = AveragePooling3D(strides=(2,2,2), padding="same")(D3)
-	    # D4 = self.inception_layer(D4, filters=[96, [64, 128], [32, 64], 64])
+	    D4 = AveragePooling3D(strides=(2,2,2), padding="same")(D3)
+	    D4 = self.inception_layer(D4, filters=[96, [64, 128], [32, 64], 64])
 
-	    # U3 = Conv3D(256, 2, padding='same', activation='tanh')(UpSampling3D(size = (2,2,2), dim_ordering="tf")(D4))
-	    # U3 = Concatenate()( [D3, U3])
-	    # U3 = self.inception_layer(U3, filters=[32, [32, 64], [16, 32], 32])
+	    U3 = Conv3D(256, 2, padding='same', activation='tanh')(UpSampling3D(size = (2,2,2), dim_ordering="tf")(D4))
+	    U3 = Concatenate()( [D3, U3])
+	    U3 = self.inception_layer(U3, filters=[32, [32, 64], [16, 32], 32])
 
 
-	    U2 = Conv3D(128, 2, padding='same', activation='tanh')(UpSampling3D(size = (2,2,2), dim_ordering="tf")(D3))
+	    U2 = Conv3D(128, 2, padding='same', activation='tanh')(UpSampling3D(size = (2,2,2), dim_ordering="tf")(U3))
 	    U2 = Concatenate()( [D2, U2])
 	    U2 = self.inception_layer(U2, filters=[32, [32, 64], [16, 32], 32])
 

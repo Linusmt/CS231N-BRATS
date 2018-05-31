@@ -14,7 +14,7 @@ class USEnet3DModelInception():
 	# optimizer: keras optimizer (e.g. Adam)
 	# loss: loss function for optimization
 	# metrics: list of metrics (e.g. ['accuracy'])
-	def __init__(self, optimizer, loss, metrics=['accuracy'], epochs=1, batch_size=16, model_name="unknown"):
+	def __init__(self, optimizer, loss, metrics=['accuracy'], epochs=1, batch_size=16, model_name="unknown", use_dropout=0.0):
 		self.optimizer = optimizer
 		self.model_name = model_name
 		self.loss = loss
@@ -23,6 +23,7 @@ class USEnet3DModelInception():
 		self.batch_size = batch_size
 		self.model = None
 		self.Squeeze_excitation_layer = Squeeze_excitation_layer
+		self.dropout = use_dropout
 
 
 	def inception_layer(self, X, filters):
@@ -38,9 +39,10 @@ class USEnet3DModelInception():
 		X_Max = Conv3D(filters=filters[3], kernel_size=1, strides=(1,1,1), padding='same', activation='tanh')(X_Max)
 
 		out_layer = Concatenate()([X1, X33, X55, X_Max])
-		out_layer = Dropout(0.2)(out_layer)
 
 		out_layer = self.Squeeze_excitation_layer(out_layer, filters[0] + filters[1][1] + filters[2][1] + filters[3], 16)
+
+		out_layer = Dropout(self.dropout)(out_layer)
 
 		return out_layer
 

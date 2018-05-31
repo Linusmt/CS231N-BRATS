@@ -4,7 +4,7 @@ import random
 import keras
 from keras.optimizers import Adam
 from keras.models import Input, Model
-from keras.layers import Conv3D,BatchNormalization, Concatenate, MaxPooling3D, AveragePooling3D, UpSampling3D, Activation, Reshape, Permute, Add, Multiply
+from keras.layers import Conv3D,BatchNormalization, Concatenate, MaxPooling3D, AveragePooling3D, UpSampling3D, Activation, Reshape, Permute, Add, Multiply, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from SE_module import Squeeze_excitation_layer
 
@@ -13,7 +13,7 @@ class USERes3DModel():
 	# optimizer: keras optimizer (e.g. Adam)
 	# loss: loss function for optimization
 	# metrics: list of metrics (e.g. ['accuracy'])
-	def __init__(self, optimizer, loss, metrics=['accuracy'], epochs=1, batch_size=16, model_name="unknown"):
+	def __init__(self, optimizer, loss, metrics=['accuracy'], epochs=1, batch_size=16, model_name="unknown", use_dropout=0.0):
 		self.optimizer = optimizer
 		self.model_name = model_name
 		self.loss = loss
@@ -22,6 +22,7 @@ class USERes3DModel():
 		self.batch_size = batch_size
 		self.model = None
 		self.Squeeze_excitation_layer = Squeeze_excitation_layer
+		self.dropout = use_dropout
 
 
 
@@ -37,6 +38,7 @@ class USERes3DModel():
 		X1 = self.Squeeze_excitation_layer(X1, f[1], 16)
 
 		X1 = BatchNormalization(axis = 4)(X1)
+		X1 = Dropout(self.dropout)(X1)
 
 		return X1
 
@@ -59,8 +61,8 @@ class USERes3DModel():
 	    D3 = Add()([D3_in, D3_out])
 
 	    D4_in = AveragePooling3D(strides=(2,2,2), padding="same")(D3)
-	    D4_out = self.double_block(D4_in, [512,512], 3, 1)
-	    D4_in = Conv3D(512, kernel_size=1, strides=(1,1,1), padding='same')(D4_in)
+	    D4_out = self.double_block(D4_in, [256,256], 3, 1)
+	    D4_in = Conv3D(256, kernel_size=1, strides=(1,1,1), padding='same')(D4_in)
 	    D4 = Add()([D4_in, D4_out])
 
 	    U3_in = Conv3D(512, 2, padding='same')(UpSampling3D(size = (2,2,2), dim_ordering="tf")(D4))
