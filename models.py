@@ -10,10 +10,12 @@ from URes3DModel import URes3DModel
 from USE3DModel import USE3DModel
 from USEnet3D_Inception import USEnet3DModelInception
 from USERes3DModel import USERes3DModel
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 
 #####
 import keras.backend as kb
+from keras.callbacks import Callback as cb
 import tensorflow as tf
 import glob
 import numpy as np
@@ -21,6 +23,7 @@ import argparse
 import pickle
 import data_prep.data_utils as data_utils
 #####
+import time
 
 IMAGE_SIZE = (64, 64, 64)
 
@@ -41,6 +44,17 @@ MODELS = {"baseline":BaselineModel,
 		  "resNet50": ResNet50Model
 		 }
 
+class TimeHistory(cb):
+    def on_train_begin(self, logs={}):
+        self.times = []
+
+    def on_epoch_begin(self, batch, logs={}):
+        self.epoch_time_start = time.time()
+
+    def on_epoch_end(self, batch, logs={}):
+        self.times.append(time.time() - self.epoch_time_start)
+
+# def continue_training_model(model_name):
 
 
 def main(args):
@@ -50,6 +64,7 @@ def main(args):
 	#Take the arguments from the command line
 	model_name = args.model
 	num_epochs = args.epochs
+	use_dropout = args.use_dropout
 	print( "Preprocessed: ", args.preprocess)
 	X, y, validation_set = data_utils.load_data(args.image_size, args.preprocess, args.augment_data)
 
@@ -66,17 +81,31 @@ def main(args):
 	decay_step = X.shape[0]/4
 	lr = tf.train.exponential_decay(args.lr, global_step, decay_step, 0.96)
 
-	model = model_generator(optimizer=Adam(lr),loss='binary_crossentropy', metrics=METRICS, epochs=num_epochs, batch_size=1, model_name=model_name)
+	model = model_generator(optimizer=Adam(lr),loss='binary_crossentropy', metrics=METRICS, epochs=num_epochs, batch_size=1, model_name=model_name, use_dropout=use_dropout)
 	model.build_model(X.shape[1:])
 	model.compile()
-
 	#Fit the models
-	history = model.fit(X, y, validation_set=validation_set)
+	# if validation_set is None:
+	# 	history = model.model.fit(x=X, y=Y, validation_split=0.2, epochs=self.epochs, batch_size=self.batch_size, callbacks=callbacks)
+	# else:
+	print(ModelCheckpoint)
+	history_file_name = "_".join(['model', model_name, str(num_epochs), str(args.image_size), "dropout_" + str(use_dropout) if use_dropout != 0 else "","test" if args.test_model else ""])
 
+	checkpointer = ModelCheckpoint(history_file_name + '-1.h5', verbose=1, save_best_only=True)
+	time_callback = TimeHistory()
+	earlystopper = EarlyStopping(patience=5, verbose=1)
+
+	history = model.model.fit(x=X, y=y, validation_data=validation_set, epochs=num_epochs, batch_size=1, callbacks=[checkpointer, time_callback, earlystopper])
+
+
+	# history = model.fit(X, y, validation_set=validation_set)
+	history.history["times"] = time_callback.times
 	#Save the model training history for later inspection
-	with open("_".join(['./train_history', model_name, str(num_epochs), str(args.image_size),"test" if args.test_model else ""])+".pkl", "wb") as history_file:
+	history_file_name = "_".join(['model', model_name, str(num_epochs), str(args.image_size), "dropout_" + str(use_dropout) if use_dropout != 0 else "","test" if args.test_model else ""])
+	with open(history_file_name+".pkl", "wb") as history_file:
 		pickle.dump(history.history, history_file)
-
+	# print(history.history.keys())
+	# print(history.history["times"])
 	#Plot the accuracy and the f1 score
 	utils.plot(history, model_name, num_epochs, args.image_size)
 
@@ -96,10 +125,12 @@ if __name__ == '__main__':
 	                    help='new image size to be chosen')
 	parser.add_argument('--augment_data', type=bool, nargs='?', default=False,
 	                    help='whether to use data augmentation')	
-	parser.add_argument('--lr', type=float, nargs='?', default=1e-4,
+	parser.add_argument('--lr', type=float, nargs='?', default=1e-3,
 	                    help='learning rate as a float')
 	parser.add_argument('--test_model', type=bool, nargs="?", default=False,
 						help="use a small dataset to make sure everything works ")
+	parser.add_argument('--use_dropout', type=float, nargs="?", default=0.0,
+						help="amount of dropout to use")
 	args = parser.parse_args()
 
 	main(args)
