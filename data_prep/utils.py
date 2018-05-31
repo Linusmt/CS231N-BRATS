@@ -105,13 +105,13 @@ def precision(true, prediction):
 	prediction = kb.round(prediction)
 	intersection = kb.sum(kb.flatten(true) * kb.flatten(prediction))
 	union = kb.sum(kb.flatten(prediction))
-	return kb.clip((2 * intersection + 1) / (union + 1), 1.0e-8, 1)
+	return kb.clip((intersection) / (union + 1), 1.0e-8, 1)
 
 def recall(true, prediction):
 	prediction = kb.round(prediction)
 	intersection = kb.sum(kb.flatten(true) * kb.flatten(prediction))
 	union = kb.sum(kb.flatten(true))
-	return kb.clip((2 * intersection + 1) / (union + 1), 1.0e-8, 1)
+	return kb.clip((intersection) / (union + 1), 1.0e-8, 1)
 
 # def brats_f1_score(true, prediction):
 # 	prediction = kb.round(prediction)
