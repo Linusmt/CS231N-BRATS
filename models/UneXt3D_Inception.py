@@ -7,7 +7,7 @@ from keras.models import Input, Model
 from keras.layers import Conv3D,BatchNormalization, Concatenate, MaxPooling3D, AveragePooling3D, UpSampling3D, Activation, Reshape, Permute, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
-class Unet3DModelInception():
+class UneXt3DModelInception():
 	# Params:
 	# optimizer: keras optimizer (e.g. Adam)
 	# loss: loss function for optimization
