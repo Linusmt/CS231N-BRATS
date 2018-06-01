@@ -1,4 +1,4 @@
-# CS 231N Project
+# Rethinking Radiology: An Analysis of Different Approaches to BraTS
 
 ## Setup
 The requirements files are not yet fully updated and many packages must be install using pip alone.
