@@ -25,7 +25,7 @@ This is part of a project done for Stanford's CS 231N.
 
 ## Usage
 
-#### Prerequisites
+### Prerequisites
 Keras for TensorFlow
 
 ### Setup
@@ -73,4 +73,4 @@ The resulting merged graphs will be added to the merged_graphs directory
 Certain Pretrained models availible upon request.
 
 ## [Our Paper]()
-COMING SOON :) 
+COMING SOON :)
