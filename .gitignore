@@ -6,3 +6,4 @@ data
 BRATS_Project
 *.pyc
 */*__pychache**
+tmp/*

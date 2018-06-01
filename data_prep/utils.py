@@ -149,8 +149,13 @@ def mean_iou(y_true, y_pred):
     return kb.mean(kb.stack(prec), axis=0)
 
 
-def plot(history, model_name, num_epochs, image_size):
+def plot(history, model_name, num_epochs, image_size, test=False):
 	# Create plot that plots model accuracy vs. epoch
+
+	if test != False:
+		path = "./tmp" 
+	else:
+		path = "./output"
 	print("Plotting accuracy")
 	fig = plt.figure(figsize=(10, 10))
 	plt.plot(history.history['binary_accuracy'])
@@ -159,7 +164,7 @@ def plot(history, model_name, num_epochs, image_size):
 	plt.ylabel('accuracy')
 	plt.xlabel('epoch')
 	plt.legend(['train', 'test'], loc='upper left')
-	plt.savefig('./output/accuracy-' + model_name +"-" + str(num_epochs) +"-" + str(image_size) + '-history1.png'.format(32))
+	plt.savefig(path + '/accuracy-' + model_name +"-" + str(num_epochs) +"-" + str(image_size) + '-history1.png'.format(32))
 	print("Finished plotting accuracy")
 	plt.close(fig)
 	print("Plotting f1_score")
@@ -172,7 +177,7 @@ def plot(history, model_name, num_epochs, image_size):
 	plt.ylabel('f1 score')
 	plt.xlabel('epoch')
 	plt.legend(['train', 'test'], loc='upper left')
-	plt.savefig('./output/f1-' + model_name +"-" + str(num_epochs) + "-" + str(image_size) + '-history1.png'.format(32))
+	plt.savefig(path + '/f1-' + model_name +"-" + str(num_epochs) + "-" + str(image_size) + '-history1.png'.format(32))
 	plt.close(fig)
 
 	print("Finished plotting f1_score")
@@ -185,7 +190,7 @@ def plot(history, model_name, num_epochs, image_size):
 	plt.ylabel('loss')
 	plt.xlabel('epoch')
 	plt.legend(['train', 'test'], loc='upper left')
-	plt.savefig('./output/loss-' + model_name +"-" + str(num_epochs) + "-" + str(image_size) + '-history1.png'.format(32))
+	plt.savefig(path + '/loss-' + model_name +"-" + str(num_epochs) + "-" + str(image_size) + '-history1.png'.format(32))
 	plt.close(fig)
 
 	print("Finished plotting loss")

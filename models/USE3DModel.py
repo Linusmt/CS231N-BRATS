@@ -6,7 +6,7 @@ from keras.optimizers import Adam
 from keras.models import Input, Model
 from keras.layers import Conv3D,BatchNormalization, Concatenate, MaxPooling3D, AveragePooling3D, UpSampling3D, Activation, Reshape, Permute, Multiply, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from SE_module import Squeeze_excitation_layer
+from models.SE_module import Squeeze_excitation_layer
 
 
 class USE3DModel():

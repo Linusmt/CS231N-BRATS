@@ -2,16 +2,11 @@ import sys
 from keras.optimizers import Adam
 
 import data_prep.utils as utils
-from baseline import BaselineModel
-from Unet3DModel import Unet3DModel
-from Unet3D_Inception import Unet3DModelInception
-from ResNet50 import ResNet50Model
-from URes3DModel import URes3DModel
-from USE3DModel import USE3DModel
-from USEnet3D_Inception import USEnet3DModelInception
-from USERes3DModel import USERes3DModel
+from models import models as models
+
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
+from pathlib import Path
 
 #####
 import keras.backend as kb
@@ -34,15 +29,6 @@ IMAGE_SIZE = (64, 64, 64)
 METRICS = ['binary_accuracy',  utils.mean_iou,  utils.brats_f1_score, utils.precision, utils.recall]
 
 METRICS = ['binary_accuracy',  utils.mean_iou,  utils.brats_f1_score, utils.precision, utils.recall]
-MODELS = {"baseline":BaselineModel, 
-		  "u3d":Unet3DModel, 
-		  "u3d_inception": Unet3DModelInception, 
-		  "ures": URes3DModel,
-		  "use": USE3DModel,
-		  "use_inception": USEnet3DModelInception,
-		  "use_res": USERes3DModel,
-		  "resNet50": ResNet50Model
-		 }
 
 class TimeHistory(cb):
     def on_train_begin(self, logs={}):
@@ -77,7 +63,7 @@ def main(args):
 	print (X.shape)
 	print (y.shape)
 
-	model_generator = MODELS[model_name]
+	model_generator = models.MODELS[model_name]
 	global_step = tf.Variable(0, name="global_step", trainable=False)
 	decay_step = X.shape[0]/4
 	lr = tf.train.exponential_decay(args.lr, global_step, decay_step, 0.98)
@@ -87,11 +73,19 @@ def main(args):
 	model.compile()
 
 	history_file_name = "_".join(['model', model_name, str(num_epochs), str(args.image_size), "dropout_" + str(use_dropout) if use_dropout != 0 else "","test" if args.test_model else ""])
-	
+
 	if args.test_model:
-		checkpointer = ModelCheckpoint("./tmp/" +history_file_name + '-1.h5', verbose=1, save_best_only=True)
+		model_save_path = './tmp/' +history_file_name + '.h5'
 	else:
-		checkpointer = ModelCheckpoint("./models/" +history_file_name + '-1.h5', verbose=1, save_best_only=True)
+		model_save_path = './models/' +history_file_name + '.h5'
+
+	my_file = Path(model_save_path)
+	if my_file.is_file() and args.load_weights:
+		print("Loading model from path")
+		model.model.load_weights(model_save_path)
+
+	checkpointer = ModelCheckpoint(model_save_path, verbose=1, save_best_only=True)
+
 
 	time_callback = TimeHistory()
 	earlystopper = EarlyStopping(patience=5, verbose=1)
@@ -112,7 +106,7 @@ def main(args):
 			pickle.dump(history.history, history_file)
 
 	#Plot the accuracy and the f1 score
-	utils.plot(history, model_name, num_epochs, args.image_size)
+	utils.plot(history, model_name, num_epochs, args.image_size, test=True)
 
 
 
@@ -137,6 +131,8 @@ if __name__ == '__main__':
 						help="use a small dataset to make sure everything works ")
 	parser.add_argument('--use_dropout', type=float, nargs="?", default=0.0,
 						help="amount of dropout to use")
+	parser.add_argument('--load_weights', type=bool, nargs="?", default=True,
+						help="whether to load in the weights")
 	args = parser.parse_args()
 
 	main(args)
