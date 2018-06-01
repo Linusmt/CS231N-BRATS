@@ -7,9 +7,7 @@ This Project was done for Stanford's CS 231N.
 ## Licence
 MIT
 
-## Our Architectures
-
-## Results
+## Architectures & Results
 
 | Model | Validation Accuracy | Number of paramters
 | --- | --- | -- |
@@ -20,7 +18,7 @@ MIT
 | Res-Unet3d (ours) | 63.15 | Alot |
 | SE Unet3d (ours)| **64.78** | Alot |
 | SE Res-Unet3d (ours) | 63.15 | Alot |
-| Se Unet3d w/ Inception (ours)| **64.78** | Alot |
+| SE Unet3d w/ Inception (ours)| **64.78** | Alot |
 
 ## About
 This is part of a project done for Stanford's CS 231N.
