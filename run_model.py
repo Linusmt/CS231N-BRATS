@@ -68,7 +68,7 @@ def main(args):
 	decay_step = X.shape[0]/4
 	lr = tf.train.exponential_decay(args.lr, global_step, decay_step, 0.98)
 
-	model = model_generator(optimizer=Adam(lr),loss='binary_crossentropy', metrics=METRICS, epochs=num_epochs, batch_size=1, model_name=model_name, use_dropout=use_dropout)
+	model = model_generator(optimizer=Adam(args.lr),loss='binary_crossentropy', metrics=METRICS, epochs=num_epochs, batch_size=1, model_name=model_name, use_dropout=use_dropout)
 	model.build_model(X.shape[1:])
 	model.compile()
 
@@ -88,7 +88,7 @@ def main(args):
 
 
 	time_callback = TimeHistory()
-	earlystopper = EarlyStopping(patience=5, verbose=1)
+	earlystopper = EarlyStopping(patience=20, verbose=1)
 
 	history = model.model.fit(x=X, y=y, validation_data=validation_set, epochs=num_epochs, batch_size=1, callbacks=[checkpointer, time_callback, earlystopper])
 
