@@ -119,9 +119,10 @@ def main(args):
 
 	make_plots = args.make_plots
 	make_table = args.make_table
-
+	image_size = args.image_size
+	epochs = args.epochs
 	histories = []
-	history_files_full_paths = glob.glob("./history/train_history" +"*" + str(NUM_EPOCHS) + "*" + str(IMAGE_SIZE) + "*")
+	history_files_full_paths = glob.glob("./history/train_history" +"*" + str(epochs) + "*" + str(IMAGE_SIZE) + "*")
 	history_files = [x.split("/")[2] for x in history_files_full_paths]
 	model_names = ["_".join(x[0:-3].split("_")[2:-1]) for x in history_files]
 
@@ -135,13 +136,13 @@ def main(args):
 		print ("************************************************\n")
 
 		for metric in METRICS:
-			save_path = './output/' + metric + "-" + "_".join(MODELS) +"-" + str(NUM_EPOCHS) +"-" + str(IMAGE_SIZE) 
+			save_path = './merged_graphs/' + metric + "-" + "_".join(MODELS) +"-" + str(epochs) +"-" + str(IMAGE_SIZE) 
 
-			plot_multiple_models(histories, model_names, NUM_EPOCHS, IMAGE_SIZE, metric, save_path)
+			plot_multiple_models(histories, model_names, epochs, image_size, metric, save_path)
 
 
 	if make_table:
-		save_path = './output/table_' + "_".join(MODELS) +"-" + str(NUM_EPOCHS) +"-" + str(IMAGE_SIZE) 
+		save_path = './merged_graphs/table_' + "_".join(MODELS) +"-" + str(epochs) +"-" + str(image_size) 
 
 		print ("\n************************************************")
 		print ("Making Tables")
