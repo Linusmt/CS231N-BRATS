@@ -125,7 +125,7 @@ if __name__ == '__main__':
 	                    help='new image size to be chosen')
 	parser.add_argument('--augment_data', type=bool, nargs='?', default=False,
 	                    help='whether to use data augmentation')	
-	parser.add_argument('--lr', type=float, nargs='?', default=1e-4,
+	parser.add_argument('--lr', type=float, nargs='?', default=5e-5,
 	                    help='learning rate as a float')
 	parser.add_argument('--test_model', type=bool, nargs="?", default=False,
 						help="use a small dataset to make sure everything works ")
