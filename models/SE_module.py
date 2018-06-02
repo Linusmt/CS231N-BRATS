@@ -12,7 +12,7 @@ def Squeeze_excitation_layer(input_x, out_dim, ratio):
     # TEST = keras.layer_global_average_pooling_3d(input_x)
     X1 = keras.layers.GlobalAveragePooling3D(data_format=None)(input_x)
 
-    X1 = keras.layers.Dense(units=int(out_dim / ratio), activation='relu', use_bias=True,
+    X1 = keras.layers.Dense(units=max(4, int(out_dim / ratio)), activation='relu', use_bias=True,
                             kernel_initializer='he_normal',
                             bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
                             activity_regularizer=None, kernel_constraint=None, bias_constraint=None)(X1)
