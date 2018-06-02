@@ -4,7 +4,7 @@ import random
 import keras
 from keras.optimizers import Adam
 from keras.models import Input, Model
-from keras.layers import Conv3D,BatchNormalization, Concatenate, MaxPooling3D, AveragePooling3D, UpSampling3D, Activation, Reshape, Permute, Dropout
+from keras.layers import Add, Conv3D,BatchNormalization, Concatenate, MaxPooling3D, AveragePooling3D, UpSampling3D, Activation, Reshape, Permute, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 class UneXt3DModel():
@@ -38,7 +38,8 @@ class UneXt3DModel():
 		X2 = BatchNormalization(axis=4)(X2)
 		X2 = Dropout(self.dropout)(X2)
 
-		return X1 + X2
+		X3 = Add()([X1, X2])
+		return X3
 
 	# This function defines the baseline model in Keras
 	def build_model(self, input_shape):
@@ -49,26 +50,26 @@ class UneXt3DModel():
 	    D1 = self.double_block(X_input, [32,64], 3, 1)
 
 	    D2 = AveragePooling3D(strides=(2,2,2), padding="same")(D1)
-	    D2 = self.double_block(D2, [64, 128], 3, 1)
+	    D2 = self.double_block(D2, [64, 64], 3, 1)
 
 	    D3 = AveragePooling3D(strides=(2,2,2), padding="same")(D2)
-	    D3 = self.double_block(D3, [128,256], 3, 1)
+	    D3 = self.double_block(D3, [96,96], 3, 1)
 
 	    D4 = AveragePooling3D(strides=(2,2,2), padding="same")(D3)
-	    D4 = self.double_block(D4, [256,512], 3, 1)
+	    D4 = self.double_block(D4, [192,192], 3, 1)
 
-	    U3 = Conv3D(512, 2, padding='same')(UpSampling3D(size = (2,2,2), dim_ordering="tf")(D4))
+	    U3 = Conv3D(192, 2, padding='same')(UpSampling3D(size = (2,2,2), dim_ordering="tf")(D4))
 	    U3 = Activation('elu')(U3)
 	    U3 = Concatenate()( [D3, U3])
-	    U3 = self.double_block(U3, [256, 256], 3 ,1 )
+	    U3 = self.double_block(U3, [128, 128], 3 ,1 )
 
 
-	    U2 = Conv3D(256, 2, padding='same')(UpSampling3D(size = (2,2,2), dim_ordering="tf")(U3))
+	    U2 = Conv3D(128, 2, padding='same')(UpSampling3D(size = (2,2,2), dim_ordering="tf")(U3))
 	    U2 = Activation('elu')(U2)
 	    U2 = Concatenate()( [D2, U2])
-	    U2 = self.double_block(U2, [128, 128], 3 ,1 )
+	    U2 = self.double_block(U2, [96, 96], 3 ,1 )
 
-	    U1 = Conv3D(128, 2, padding='same')(UpSampling3D(size = (2,2,2), dim_ordering="tf")(U2))
+	    U1 = Conv3D(64, 2, padding='same')(UpSampling3D(size = (2,2,2), dim_ordering="tf")(U2))
 	    U1 = Activation('elu')(U1)
 	    U1 = Concatenate()( [D1, U1])
 	    U1 = self.double_block(U1, [64, 64], 3 ,1 )

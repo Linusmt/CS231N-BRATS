@@ -4,7 +4,7 @@ import random
 import keras
 from keras.optimizers import Adam
 from keras.models import Input, Model
-from keras.layers import Conv3D,BatchNormalization, Concatenate, MaxPooling3D, AveragePooling3D, UpSampling3D, Activation, Reshape, Permute, Dropout
+from keras.layers import Add,Conv3D,BatchNormalization, Concatenate, MaxPooling3D, AveragePooling3D, UpSampling3D, Activation, Reshape, Permute, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 class UneXt3DModelInception():
@@ -12,7 +12,7 @@ class UneXt3DModelInception():
 	# optimizer: keras optimizer (e.g. Adam)
 	# loss: loss function for optimization
 	# metrics: list of metrics (e.g. ['accuracy'])
-	def __init__(self, optimizer, loss, metrics=['accuracy'], epochs=1, batch_size=16, model_name="unknown", use_dropout=0.0):
+	def __init__(self, optimizer, loss, metrics=['accuracy'], epochs=1, batch_size=8, model_name="unknown", use_dropout=0.0):
 		self.optimizer = optimizer
 		self.model_name = model_name
 		self.loss = loss
@@ -52,8 +52,8 @@ class UneXt3DModelInception():
 
 		out_layer_ = Concatenate()([X1_, X33_, X55_, X_Max_])
 
-
-		out_layer = Dropout(self.dropout)(out_layer + out_layer_)
+		out_layer_sum = Add()([out_layer , out_layer_])
+		out_layer = Dropout(self.dropout)(out_layer_sum)
 		return out_layer
 
 	# This function defines the baseline model in Keras

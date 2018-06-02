@@ -108,7 +108,7 @@ def create_table(histories, model_names, save_path="table_default"):
 	for i in range(len(metric_arr)):
 		metric_results = metric_arr[i]
 		data.append([METRICS[i]] + ['%.4f' % x for x in metric_results])
-
+	data = np.array(data).T
 	with open(save_path + ".csv", "w") as csvfile:
 		writer = csv.writer(csvfile)
 		for row in data:
@@ -122,9 +122,9 @@ def main(args):
 	image_size = args.image_size
 	epochs = args.epochs
 	histories = []
-	history_files_full_paths = glob.glob("./history/train_history" +"*" + str(epochs) + "*" + str(IMAGE_SIZE) + "*")
+	history_files_full_paths = glob.glob("./history/model" +"*" + str(epochs) + "*" + str(IMAGE_SIZE) + "*")
 	history_files = [x.split("/")[2] for x in history_files_full_paths]
-	model_names = ["_".join(x[0:-3].split("_")[2:-1]) for x in history_files]
+	model_names = ["_".join(x[0:-3].split("_")[1:-1]) for x in history_files]
 
 
 	for history_file in history_files_full_paths:

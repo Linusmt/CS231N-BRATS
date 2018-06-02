@@ -8,6 +8,7 @@ from models.USE3DModel import USE3DModel
 from models.USEnet3D_Inception import USEnet3DModelInception
 from models.USERes3DModel import USERes3DModel
 
+# MODELS helps to summarize the model
 MODELS = {"baseline":BaselineModel, 
 		  "u3d":Unet3DModel, 
 		  "u3d_inception": Unet3DModelInception,
