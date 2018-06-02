@@ -63,7 +63,7 @@ class UneXt3DModelInception():
 	    X_input = Input(input_shape)
 	    # X = Conv3D(filters=16, kernel_size=3, strides=(1,1,1), padding='same', activation='tanh')(X_input)
 	    X = Conv3D(filters=32, kernel_size=3, strides=(1,1,1), padding='same', activation='tanh')(X_input)
-	    D1 = self.inception_layer(X, filters=[16, [16, 32], [4, 8], 16])
+	    D1 = self.inception_layer(X, filters=[16, [16, 16], [4, 8], 16])
 
 	    D2 = AveragePooling3D(strides=(2,2,2), padding="same")(D1)
 	    D2 = self.inception_layer(D2, filters=[16, [16, 32], [8, 16], 16])
@@ -73,20 +73,20 @@ class UneXt3DModelInception():
 	    D3 = self.inception_layer(D3, filters=[32, [32, 64], [8, 32], 32])
 
 	    D4 = AveragePooling3D(strides=(2,2,2), padding="same")(D3)
-	    D4 = self.inception_layer(D4, filters=[96, [64, 128], [32, 64], 64])
+	    D4 = self.inception_layer(D4, filters=[64, [64, 96], [32, 48], 48])
 
 	    U3 = Conv3D(256, 2, padding='same', activation='tanh')(UpSampling3D(size = (2,2,2), dim_ordering="tf")(D4))
 	    U3 = Concatenate()( [D3, U3])
-	    U3 = self.inception_layer(U3, filters=[32, [32, 64], [16, 32], 32])
+	    U3 = self.inception_layer(U3, filters=[32, [32, 48], [16, 32], 32])
 
 
 	    U2 = Conv3D(128, 2, padding='same', activation='tanh')(UpSampling3D(size = (2,2,2), dim_ordering="tf")(U3))
 	    U2 = Concatenate()( [D2, U2])
-	    U2 = self.inception_layer(U2, filters=[32, [32, 64], [16, 32], 32])
+	    U2 = self.inception_layer(U2, filters=[32, [32, 32], [16, 32], 32])
 
 	    U1 = Conv3D(64, 2, padding='same', activation='tanh')(UpSampling3D(size = (2,2,2), dim_ordering="tf")(U2))
 	    U1 = Concatenate()( [D1, U1])
-	    U1 = self.inception_layer(U1, filters=[16, [16, 32], [16, 32], 16])
+	    U1 = self.inception_layer(U1, filters=[16, [16, 16], [16, 16], 16])
 
 	    pred = Conv3D(filters=1, kernel_size=1, activation='sigmoid')(U1)
 

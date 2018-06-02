@@ -56,15 +56,15 @@ class UneXt3DModel():
 	    D3 = self.double_block(D3, [96,96], 3, 1)
 
 	    D4 = AveragePooling3D(strides=(2,2,2), padding="same")(D3)
-	    D4 = self.double_block(D4, [192,192], 3, 1)
+	    D4 = self.double_block(D4, [128,192], 3, 1)
 
 	    U3 = Conv3D(192, 2, padding='same')(UpSampling3D(size = (2,2,2), dim_ordering="tf")(D4))
 	    U3 = Activation('elu')(U3)
 	    U3 = Concatenate()( [D3, U3])
-	    U3 = self.double_block(U3, [128, 128], 3 ,1 )
+	    U3 = self.double_block(U3, [128, 96], 3 ,1 )
 
 
-	    U2 = Conv3D(128, 2, padding='same')(UpSampling3D(size = (2,2,2), dim_ordering="tf")(U3))
+	    U2 = Conv3D(96, 2, padding='same')(UpSampling3D(size = (2,2,2), dim_ordering="tf")(U3))
 	    U2 = Activation('elu')(U2)
 	    U2 = Concatenate()( [D2, U2])
 	    U2 = self.double_block(U2, [96, 96], 3 ,1 )
@@ -72,7 +72,7 @@ class UneXt3DModel():
 	    U1 = Conv3D(64, 2, padding='same')(UpSampling3D(size = (2,2,2), dim_ordering="tf")(U2))
 	    U1 = Activation('elu')(U1)
 	    U1 = Concatenate()( [D1, U1])
-	    U1 = self.double_block(U1, [64, 64], 3 ,1 )
+	    U1 = self.double_block(U1, [64, 32], 3 ,1 )
 
 	    pred = Conv3D(filters=1, kernel_size=1, activation='sigmoid')(U1)
 
