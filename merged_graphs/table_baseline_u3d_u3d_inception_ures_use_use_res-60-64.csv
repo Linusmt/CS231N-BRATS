@@ -1,0 +1,4 @@
+model,average_time_per_epoch,binary_accuracy,val_binary_accuracy,brats_f1_score,val_brats_f1_score,loss,val_loss
+u3d_inception_60_64_dropout_0.2__lr_1.0E-04_wd,185.2676,0.9984,0.9982,0.7839,0.6835,0.0021,0.0029
+ures_60_64_dropout_0.2__lr_1.0E-04_wd,327.2996,0.9983,0.9981,0.7458,0.6189,0.0027,0.0034
+u3d_60_64_dropout_0.2__lr_1.0E-04_wd,294.1529,0.9981,0.9980,0.7000,0.5839,0.0032,0.0038

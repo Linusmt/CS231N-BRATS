@@ -81,7 +81,7 @@ class USEnet3DModelInception():
 	    U1 = Concatenate()( [D1, U1])
 	    U1 = self.inception_layer(U1, filters=[16, [16, 32], [16, 32], 16])
 
-	    pred = Conv3D(filters=1, kernel_size=1, activation='sigmoid')(U1)
+	    pred = Conv3D(filters=5, kernel_size=1, activation='softmax')(U1)
 
 
 	    # Create instance of Baseline Model

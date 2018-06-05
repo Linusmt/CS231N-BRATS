@@ -49,7 +49,7 @@ class BaselineModel():
 
 
 	    # Final prediction (sigmoid)
-	    X = Conv3D(filters=1, kernel_size=1, activation='sigmoid')(X)
+	    X = Conv3D(filters=5, kernel_size=1, activation='softmax')(X)
 
 	    # Create instance of Baseline Model
 	    model = Model(inputs=X_input, outputs=X, name='BaselineModel')
